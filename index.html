@@ -30,12 +30,13 @@
         td { padding: 12px; text-align: center; border: 1px solid #dee2e6; background: white; }
         .auth-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .hidden { display: none; }
-        .link-toggle { text-align: center; display: block; margin-top: 15px; color: var(--primary-blue); text-decoration: none; cursor: pointer; }
+        .link-toggle { text-align: center; display: block; margin-top: 15px; color: var(--primary-blue); text-decoration: none; cursor: pointer; font-size: 0.95rem; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- KHU VỰC ĐĂNG NHẬP / ĐĂNG KÝ -->
     <div id="auth-section" class="auth-container">
         <h2 id="auth-title" style="text-align:center; margin-bottom:25px;">Đăng Nhập</h2>
         <div class="input-group" style="margin-bottom:10px;">
@@ -56,6 +57,7 @@
         <a class="link-toggle" id="toggle-link" onclick="toggleAuth()">Chưa có tài khoản? Đăng ký ngay</a>
     </div>
 
+    <!-- NỘI DUNG CHÍNH SAU KHI ĐĂNG NHẬP -->
     <div id="main-content" class="hidden">
         <div class="header-top">
             <div style="font-weight: bold; font-size: 1.1rem;">Chào: <span id="user-display"></span></div>
@@ -144,23 +146,43 @@
     const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     let isLogin = true;
 
+    // HÀM CHUYỂN ĐỔI GIỮA ĐĂNG NHẬP VÀ ĐĂNG KÝ
     function toggleAuth() {
         isLogin = !isLogin;
-        document.getElementById('auth-title').innerText = isLogin ? "Đăng Nhập" : "Đăng Ký";
-        document.getElementById('btn-auth').innerText = isLogin ? "Đăng Nhập" : "Đăng Ký";
-        document.getElementById('retype-div').classList.toggle('hidden');
+        const authTitle = document.getElementById('auth-title');
+        const btnAuth = document.getElementById('btn-auth');
+        const toggleLink = document.getElementById('toggle-link');
+        const retypeDiv = document.getElementById('retype-div');
+
+        if (isLogin) {
+            authTitle.innerText = "Đăng Nhập";
+            btnAuth.innerText = "Đăng Nhập";
+            toggleLink.innerText = "Chưa có tài khoản? Đăng ký ngay";
+            retypeDiv.classList.add('hidden');
+        } else {
+            authTitle.innerText = "Đăng Ký Nhân Viên";
+            btnAuth.innerText = "Hoàn Tất Đăng Ký";
+            toggleLink.innerText = "Đã có tài khoản? Quay lại Đăng nhập";
+            retypeDiv.classList.remove('hidden');
+        }
     }
 
     async function handleAuth() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
+        if(!e || !p) return alert("Vui lòng nhập đầy đủ thông tin!");
+        
         try {
-            if(isLogin) await auth.signInWithEmailAndPassword(e, p);
-            else {
-                if(p !== document.getElementById('repassword').value) return alert("Mật khẩu không khớp!");
+            if(isLogin) {
+                await auth.signInWithEmailAndPassword(e, p);
+            } else {
+                const rp = document.getElementById('repassword').value;
+                if(p !== rp) return alert("Mật khẩu xác nhận không khớp!");
                 await auth.createUserWithEmailAndPassword(e, p);
+                alert("Đăng ký thành công!");
+                toggleAuth(); // Trở về màn hình đăng nhập
             }
-        } catch(err) { alert(err.message); }
+        } catch(err) { alert("Lỗi: " + err.message); }
     }
 
     function logout() { auth.signOut(); location.reload(); }
@@ -171,7 +193,6 @@
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-display').innerText = user.email;
             
-            // Tự động chọn tháng hiện tại
             const m = ("0" + (new Date().getMonth() + 1)).slice(-2);
             document.getElementById('filterMonth').value = m;
             document.getElementById('workDate').valueAsDate = new Date();
@@ -211,7 +232,6 @@
         const month = document.getElementById('filterMonth').value;
         const isAdmin = ADMIN_LIST.includes(user.email);
         
-        // Luôn hiện/ẩn phần admin dựa trên email
         document.getElementById('admin-section').classList.toggle('hidden', !isAdmin);
 
         let query = db.collection("bang_luong").where("thang", "==", month);
