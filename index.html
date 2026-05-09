@@ -10,15 +10,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; margin: 0; padding: 20px; }
-        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 800px; margin: auto; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 950px; margin: auto; }
         .hidden { display: none; }
-        input, button, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ddd; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
+        input, button, select { width: 100%; padding: 10px; margin: 5px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        button:hover { opacity: 0.8; }
         button.admin-btn { background: #28a745; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #f4f4f4; }
-        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; pb: 10px; }
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #f8f9fa; font-weight: bold; }
+        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .ot-cell { color: #d9534f; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -26,56 +29,72 @@
 <div class="container">
     <!-- Màn hình Đăng nhập -->
     <div id="login-form">
-        <h2>Đăng Nhập Hệ Thống</h2>
+        <h2 style="text-align: center;">Đăng Nhập Hệ Thống 1177</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Mật khẩu">
-        <button onclick="login()">Đăng Nhập</button>
+        <button onclick="login()">ĐĂNG NHẬP</button>
     </div>
 
     <!-- Màn hình Chính -->
     <div id="main-content" class="hidden">
         <div class="header-info">
-            <span id="user-email" style="font-weight: bold;"></span>
-            <button onclick="logout()" style="width: auto; padding: 5px 15px; background: #dc3545;">Thoát</button>
+            <div>Chào, <span id="user-email" style="color: #007bff;"></span></div>
+            <button onclick="logout()" style="width: auto; background: #dc3545; padding: 5px 15px;">Thoát</button>
         </div>
 
-        <div id="admin-panel" class="hidden" style="background: #fff3cd; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-            <strong>Chế độ Quản trị:</strong> Xem tất cả nhân viên
+        <div id="admin-panel" class="hidden" style="background: #fff3cd; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #ffc107;">
+            <strong>Chế độ Quản trị:</strong> Bạn có thể xem và xuất dữ liệu của tất cả nhân viên.
         </div>
 
         <h3>Nhập Công Ngày</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-            <input type="date" id="workDate">
-            <input type="number" id="breakMin" value="45" placeholder="Nghỉ (phút)">
-            <input type="time" id="timeIn" value="08:00">
-            <input type="time" id="timeOut" value="17:00">
+            <div><label>Ngày làm việc:</label><input type="date" id="workDate"></div>
+            <div><label>Nghỉ (phút):</label><input type="number" id="breakMin" value="60"></div>
+            <div><label>Giờ vào:</label><input type="time" id="timeIn" value="08:00"></div>
+            <div><label>Giờ ra:</label><input type="time" id="timeOut" value="17:00"></div>
         </div>
-        <button onclick="saveData()">LƯU DỮ LIỆU</button>
+        <button onclick="saveData()" style="margin-top: 10px; background: #0056b3;">LƯU DỮ LIỆU</button>
 
-        <hr>
+        <hr style="margin: 25px 0;">
+        
         <h3>Báo Cáo & Lịch Sử</h3>
-        <div style="display: flex; gap: 10px;">
-            <select id="filterMonth"><option value="01">Tháng 1</option><option value="02">Tháng 2</option><!-- Thêm các tháng khác --><option value="05" selected>Tháng 5</option></select>
-            <button class="admin-btn" onclick="exportExcel()">Xuất Excel</button>
+        <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <div style="flex: 1;">
+                <label>Chọn tháng xem báo cáo:</label>
+                <select id="filterMonth" onchange="loadData(auth.currentUser)">
+                    <option value="01">Tháng 1</option><option value="02">Tháng 2</option>
+                    <option value="03">Tháng 3</option><option value="04">Tháng 4</option>
+                    <option value="05" selected>Tháng 5</option><option value="06">Tháng 6</option>
+                    <option value="07">Tháng 7</option><option value="08">Tháng 8</option>
+                    <option value="09">Tháng 9</option><option value="10">Tháng 10</option>
+                    <option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+                </select>
+            </div>
+            <button class="admin-btn" onclick="exportExcel()" style="flex: 1;">XUẤT EXCEL</button>
         </div>
 
-        <table id="salaryTable">
-            <thead>
-                <tr>
-                    <th>Ngày</th>
-                    <th>Nhân viên</th>
-                    <th>Tổng giờ</th>
-                    <th>Thành tiền</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-        <h4 id="totalSummary" style="text-align: right; color: red;"></h4>
+        <div class="table-responsive">
+            <table id="salaryTable">
+                <thead>
+                    <tr>
+                        <th>Ngày</th>
+                        <th>Nhân viên</th>
+                        <th>Vào</th>
+                        <th>Ra</th>
+                        <th>Nghỉ</th>
+                        <th>Cơ bản</th>
+                        <th>Tăng ca</th>
+                        <th>Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <h4 id="totalSummary" style="text-align: right; color: #dc3545; font-size: 1.2rem; margin-top: 15px;"></h4>
     </div>
 </div>
 
 <script>
-    // Cấu hình Firebase của bạn
     const firebaseConfig = {
         apiKey: "AIzaSyDzp1rjYmoxb8iFfMd0mcwgqeVimP4LXkw",
         authDomain: "quanlyluong2026.firebaseapp.com",
@@ -88,76 +107,115 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const ADMIN_EMAIL = "admin@1177.com"; // Thay bằng email admin của bạn
+    const ADMIN_EMAIL = "admin@1177.com";
 
-    // --- Xử lý Đăng nhập ---
     function login() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
-        auth.signInWithEmailAndPassword(e, p).catch(err => alert("Lỗi: " + err.message));
+        auth.signInWithEmailAndPassword(e, p).catch(err => alert("Lỗi đăng nhập: " + err.message));
     }
 
-    function logout() { auth.signOut(); location.reload(); }
+    function logout() { auth.signOut(); }
 
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('login-form').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('user-email').innerText = user.email;
+            document.getElementById('user-email').innerText = user.email.split('@')[0].toUpperCase();
+            
+            // 1. Tự động gán ngày hiện tại
+            document.getElementById('workDate').valueAsDate = new Date();
+            
             if(user.email === ADMIN_EMAIL) document.getElementById('admin-panel').classList.remove('hidden');
             loadData(user);
+        } else {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('main-content').classList.add('hidden');
         }
     });
 
-    // --- Lưu dữ liệu ---
     async function saveData() {
         const user = auth.currentUser;
         const date = document.getElementById('workDate').value;
         const tIn = document.getElementById('timeIn').value;
         const tOut = document.getElementById('timeOut').value;
-        const bMin = parseInt(document.getElementById('breakMin').value);
+        const bMin = parseInt(document.getElementById('breakMin').value) || 0;
+
+        if(!date) return alert("Vui lòng chọn ngày!");
 
         const start = new Date(`2026-01-01 ${tIn}`);
         const end = new Date(`2026-01-01 ${tOut}`);
-        let totalHrs = (end - start) / (3600000) - (bMin / 60);
-        let salary = totalHrs > 8 ? (8 * 1177) + ((totalHrs - 8) * 1177 * 1.25) : totalHrs * 1177;
+        let diff = (end - start) / 3600000;
+        if (diff < 0) diff += 24; // Xử lý làm xuyên đêm
+        
+        let totalHrs = diff - (bMin / 60);
+        if (totalHrs < 0) totalHrs = 0;
 
-        await db.collection("bang_luong").add({
-            uid: user.uid,
-            email: user.email,
-            ngay: date,
-            tong_gio: totalHrs.toFixed(2),
-            thanh_tien: Math.round(salary),
-            thang: date.substring(5, 7)
-        });
-        alert("Đã lưu!");
+        // Tính lương: 8 tiếng đầu 100%, sau 8 tiếng tăng ca 125%
+        let basicHrs = totalHrs > 8 ? 8 : totalHrs;
+        let otHrs = totalHrs > 8 ? (totalHrs - 8) : 0;
+        let salary = (basicHrs * 1177) + (otHrs * 1177 * 1.25);
+
+        try {
+            await db.collection("bang_luong").add({
+                uid: user.uid,
+                email: user.email,
+                ngay: date,
+                gio_vao: tIn,
+                gio_ra: tOut,
+                gio_nghi: bMin,
+                tong_gio: totalHrs.toFixed(2),
+                gio_co_ban: basicHrs.toFixed(2),
+                gio_tang_ca: otHrs.toFixed(2),
+                thanh_tien: Math.round(salary),
+                thang: date.substring(5, 7)
+            });
+            alert("Đã lưu công ngày " + date);
+            
+            // 2. Xóa trắng giờ để nhập người tiếp theo
+            document.getElementById('timeIn').value = "08:00";
+            document.getElementById('timeOut').value = "17:00";
+        } catch (e) {
+            alert("Lỗi khi lưu: " + e.message);
+        }
     }
 
-    // --- Tải dữ liệu & Báo cáo ---
     function loadData(user) {
-        let query = db.collection("bang_luong");
+        const selectedMonth = document.getElementById('filterMonth').value;
+        let query = db.collection("bang_luong").where("thang", "==", selectedMonth);
+        
         if (user.email !== ADMIN_EMAIL) {
             query = query.where("uid", "==", user.uid);
         }
 
-        query.onSnapshot(snapshot => {
+        query.orderBy("ngay", "asc").onSnapshot(snapshot => {
             let html = '';
             let totalMonth = 0;
             snapshot.forEach(doc => {
                 const d = doc.data();
                 totalMonth += d.thanh_tien;
-                html += `<tr><td>${d.ngay}</td><td>${d.email}</td><td>${d.tong_gio}</td><td>${d.thanh_tien.toLocaleString()} ¥</td></tr>`;
+                html += `
+                    <tr>
+                        <td>${d.ngay}</td>
+                        <td>${d.email.split('@')[0]}</td>
+                        <td>${d.gio_vao}</td>
+                        <td>${d.gio_ra}</td>
+                        <td>${d.gio_nghi}m</td>
+                        <td>${d.gio_co_ban || (d.tong_gio > 8 ? 8 : d.tong_gio)}</td>
+                        <td class="ot-cell">${d.gio_tang_ca || (d.tong_gio > 8 ? (d.tong_gio - 8).toFixed(2) : 0)}</td>
+                        <td style="font-weight:bold;">${d.thanh_tien.toLocaleString()} ¥</td>
+                    </tr>`;
             });
             document.getElementById('tableBody').innerHTML = html;
             document.getElementById('totalSummary').innerText = `Tổng cộng: ${totalMonth.toLocaleString()} ¥`;
         });
     }
 
-    // --- Xuất Excel ---
     function exportExcel() {
         const table = document.getElementById("salaryTable");
+        const month = document.getElementById('filterMonth').value;
         const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, "BaoCaoLuong_1177.xlsx");
+        XLSX.writeFile(wb, `Bao_Cao_Luong_Thang_${month}_1177.xlsx`);
     }
 </script>
 </body>
