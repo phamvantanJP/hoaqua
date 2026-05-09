@@ -3,65 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Theo dõi giờ làm hoa quả - Fixed</title>
+    <title>Hệ Thống Theo Dõi Giờ Làm</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; margin: 0; padding: 10px; }
-        .container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 1000px; margin: auto; }
+        :root { --primary-blue: #0056b3; --primary-hover: #004494; --bg-gray: #f8f9fa; --admin-green: #28a745; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1000px; margin: auto; }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-logout { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        
+        .card { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 20px; border: 1px solid #e1e4e8; }
+        .card-blue { background: #eef6ff; border: 1px solid #d0e3ff; }
+        .card h3 { margin: 0 0 20px 0; font-size: 1.2rem; font-weight: 700; }
+
+        /* Form Layout */
+        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        .input-group label { font-size: 0.9rem; font-weight: 600; color: #555; }
+        
+        input, select { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; outline: none; background: white; }
+        input:focus { border-color: var(--primary-blue); }
+        
+        /* Chặn gõ phím, chỉ cho phép chọn */
+        input[type="date"], input[type="time"] { cursor: pointer; }
+
+        .btn-save { background: var(--primary-blue); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; text-transform: uppercase; }
+        .btn-save:hover { background: var(--primary-hover); }
+
+        .filter-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .btn-excel { background: var(--admin-green); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #f1f3f5; padding: 12px; font-weight: 600; border: 1px solid #dee2e6; color: #000; }
+        td { padding: 12px; text-align: center; border: 1px solid #dee2e6; background: white; }
+
+        .auth-container { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
         .hidden { display: none; }
-        input, button, select { width: 100%; padding: 12px; margin: 5px 0; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-        button.admin-btn { background: #28a745; }
-        .table-responsive { overflow-x: auto; margin-top: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background: #f8f9fa; position: sticky; top: 0; }
-        .header-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .summary-section { margin-top: 25px; padding: 15px; border: 2px solid #28a745; border-radius: 8px; background: #f9fff9; }
+        .link-toggle { text-align: center; display: block; margin-top: 15px; color: var(--primary-blue); text-decoration: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="login-form">
-        <h2 style="text-align: center;">Hệ Thống Theo dõi giờ làm hoa quả</h2>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Mật khẩu">
-        <button onclick="login()">ĐĂNG NHẬP</button>
+    <!-- AUTHENTICATION -->
+    <div id="auth-section" class="auth-container">
+        <h2 id="auth-title" style="text-align:center; margin-bottom:25px;">Đăng Nhập</h2>
+        <div class="input-group" style="margin-bottom:10px;">
+            <label>Email</label>
+            <input type="email" id="email" placeholder="Ví dụ: tan@gmail.com">
+        </div>
+        <div class="input-group" style="margin-bottom:10px;">
+            <label>Mật khẩu</label>
+            <input type="password" id="password" placeholder="••••••">
+        </div>
+        <div id="retype-div" class="hidden">
+            <div class="input-group" style="margin-bottom:10px;">
+                <label>Xác nhận mật khẩu</label>
+                <input type="password" id="repassword" placeholder="Nhập lại mật khẩu">
+            </div>
+        </div>
+        <button class="btn-save" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
+        <a class="link-toggle" id="toggle-link" onclick="toggleAuth()">Chưa có tài khoản? Đăng ký ngay</a>
     </div>
 
+    <!-- MAIN APP -->
     <div id="main-content" class="hidden">
-        <div class="header-info">
-            <div id="user-display" style="font-weight: bold;"></div>
-            <button onclick="logout()" style="width: auto; background: #dc3545; padding: 5px 10px;">Thoát</button>
+        <div class="header-top">
+            <div style="font-weight: bold; font-size: 1.1rem;">User: <span id="user-display"></span></div>
+            <button class="btn-logout" onclick="logout()">Thoát</button>
         </div>
 
-        <div style="background: #e7f3ff; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-            <h3 style="margin-top:0;">Nhập Công</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <input type="date" id="workDate">
-                <input type="number" id="breakMin" value="45" placeholder="Nghỉ (phút)">
-                <input type="time" id="timeIn" value="08:00">
-                <input type="time" id="timeOut" value="17:00">
+        <div class="card card-blue">
+            <h3>Nhập Công</h3>
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label>Chọn ngày làm việc</label>
+                    <input type="date" id="workDate" onkeydown="return false">
+                </div>
+                <div class="input-group">
+                    <label>Giải lao (phút)</label>
+                    <input type="number" id="breakMin" value="45">
+                </div>
+                <div class="input-group">
+                    <label>Giờ vào</label>
+                    <input type="time" id="timeIn" value="08:00" onkeydown="return false">
+                </div>
+                <div class="input-group">
+                    <label>Giờ ra</label>
+                    <input type="time" id="timeOut" value="17:00" onkeydown="return false">
+                </div>
             </div>
-            <button onclick="saveData()" style="margin-top: 10px; background: #0056b3;">LƯU DỮ LIỆU</button>
+            <button class="btn-save" onclick="saveData()">LƯU DỮ LIỆU</button>
         </div>
 
-        <div style="display: flex; gap: 5px; align-items: center;">
-            <label style="white-space: nowrap;">Tháng: </label>
-            <select id="filterMonth" onchange="loadData()">
+        <div class="filter-row">
+            <label style="font-weight: bold;">Tháng:</label>
+            <select id="filterMonth" style="width: 100px;" onchange="loadData()">
                 <option value="01">01</option><option value="02">02</option><option value="03">03</option>
                 <option value="04">04</option><option value="05" selected>05</option><option value="06">06</option>
                 <option value="07">07</option><option value="08">08</option><option value="09">09</option>
                 <option value="10">10</option><option value="11">11</option><option value="12">12</option>
             </select>
-            <button class="admin-btn" onclick="exportDetail()" style="width: auto;">Excel</button>
+            <div style="flex-grow: 1;"></div>
+            <button class="btn-excel" onclick="exportExcel('detailTable', 'Bang_Cong')">Excel</button>
         </div>
 
-        <div class="table-responsive">
+        <div class="table-wrapper">
             <table id="detailTable">
                 <thead>
                     <tr>
@@ -72,18 +124,21 @@
             </table>
         </div>
 
-        <div id="admin-only-section" class="hidden summary-section">
-            <h3 style="color: #28a745; margin-top:0;">Tổng Hợp Lương</h3>
-            <button class="admin-btn" onclick="exportSummary()">XUẤT TỔNG HỢP (EXCEL)</button>
-            <div class="table-responsive">
-                <table id="summaryTable">
-                    <thead>
-                        <tr>
-                            <th>STT</th><th>Tên</th><th>Ngày</th><th>Giờ</th><th>TC</th><th>Tiền</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summaryBody"></tbody>
-                </table>
+        <!-- ADMIN SECTION -->
+        <div id="admin-section" class="hidden" style="margin-top: 40px;">
+            <div class="card">
+                <h3 style="color: var(--admin-green);">Báo Cáo Tổng Hợp (Admin)</h3>
+                <button class="btn-excel" onclick="exportExcel('summaryTable', 'Tong_Hop')" style="margin-bottom:15px;">Xuất Excel Tổng</button>
+                <div class="table-wrapper">
+                    <table id="summaryTable">
+                        <thead>
+                            <tr>
+                                <th>STT</th><th>Nhân viên</th><th>Số ngày</th><th>Tổng giờ</th><th>Tổng TC</th><th>Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody id="summaryBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -102,27 +157,44 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const ADMIN_EMAIL = "admin@1177.com";
+    const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
+    let isLogin = true;
 
-    function login() {
+    function toggleAuth() {
+        isLogin = !isLogin;
+        document.getElementById('auth-title').innerText = isLogin ? "Đăng Nhập" : "Đăng Ký Nhân Viên";
+        document.getElementById('btn-auth').innerText = isLogin ? "Đăng Nhập" : "Hoàn Tất Đăng Ký";
+        document.getElementById('retype-div').classList.toggle('hidden');
+    }
+
+    async function handleAuth() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
-        auth.signInWithEmailAndPassword(e, p).catch(err => alert("Lỗi: " + err.message));
+        if(!e || !p) return alert("Vui lòng nhập đầy đủ email và mật khẩu!");
+        try {
+            if(isLogin) {
+                await auth.signInWithEmailAndPassword(e, p);
+            } else {
+                const rp = document.getElementById('repassword').value;
+                if(p !== rp) return alert("Mật khẩu xác nhận không đúng!");
+                await auth.createUserWithEmailAndPassword(e, p);
+                alert("Đăng ký thành công!");
+            }
+        } catch(err) { alert("Lỗi: " + err.message); }
     }
 
     function logout() { auth.signOut(); }
 
     auth.onAuthStateChanged(user => {
         if (user) {
-            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('user-display').innerText = "User: " + user.email.split('@')[0];
+            document.getElementById('user-display').innerText = user.email.split('@')[0];
             document.getElementById('workDate').valueAsDate = new Date();
-            
-            if(user.email === ADMIN_EMAIL) document.getElementById('admin-only-section').classList.remove('hidden');
+            if(ADMIN_LIST.includes(user.email)) document.getElementById('admin-section').classList.remove('hidden');
             loadData();
         } else {
-            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
             document.getElementById('main-content').classList.add('hidden');
         }
     });
@@ -130,107 +202,72 @@
     async function saveData() {
         const user = auth.currentUser;
         const date = document.getElementById('workDate').value;
-        if(!date) return alert("Chưa chọn ngày!");
-        
-        const monthInput = date.substring(5, 7);
         const tIn = document.getElementById('timeIn').value;
         const tOut = document.getElementById('timeOut').value;
         const bMin = parseInt(document.getElementById('breakMin').value) || 0;
+        if(!date) return alert("Hãy chọn ngày!");
 
         const start = new Date(`2026-01-01 ${tIn}`);
         const end = new Date(`2026-01-01 ${tOut}`);
         let diff = (end - start) / 3600000;
         if (diff < 0) diff += 24;
         let totalHrs = Math.max(0, diff - (bMin / 60));
-
         let basic = totalHrs > 8 ? 8 : totalHrs;
         let ot = totalHrs > 8 ? (totalHrs - 8) : 0;
         let money = (basic * 1177) + (ot * 1177 * 1.25);
 
-        try {
-            await db.collection("bang_luong").add({
-                uid: user.uid, email: user.email, ngay: date,
-                gio_vao: tIn, gio_ra: tOut, gio_nghi: bMin,
-                tong_gio: totalHrs.toFixed(2), gio_co_ban: basic.toFixed(2),
-                gio_tang_ca: ot.toFixed(2), thanh_tien: Math.round(money),
-                thang: monthInput
-            });
-            
-            // Tự động chuyển bộ lọc về tháng vừa nhập để thấy dữ liệu nhảy ra
-            document.getElementById('filterMonth').value = monthInput;
-            loadData();
-            
-            alert("Lưu thành công!");
-        } catch(e) { alert("Lỗi lưu: " + e); }
+        await db.collection("bang_luong").add({
+            uid: user.uid, email: user.email, ngay: date,
+            gio_vao: tIn, gio_ra: tOut, giai_lao: bMin,
+            gio_lam: basic.toFixed(2), tang_ca: ot.toFixed(2), 
+            thanh_tien: Math.round(money), thang: date.substring(5, 7)
+        });
+        alert("Đã lưu dữ liệu thành công!");
     }
 
     function loadData() {
         const user = auth.currentUser;
         const month = document.getElementById('filterMonth').value;
-        
-        // Bỏ orderBy để tránh lỗi Index Firebase chưa khởi tạo
         let query = db.collection("bang_luong").where("thang", "==", month);
-        
-        if (user.email !== ADMIN_EMAIL) query = query.where("uid", "==", user.uid);
+        if (!ADMIN_LIST.includes(user.email)) query = query.where("uid", "==", user.uid);
 
         query.onSnapshot(snapshot => {
-            let detailHtml = '';
-            let summaryData = {};
-            
-            // Tự sắp xếp thủ công bằng Javascript thay vì Firestore
-            let docs = [];
+            let detailHtml = ''; let summaryData = {}; let docs = [];
             snapshot.forEach(d => docs.push(d.data()));
             docs.sort((a, b) => a.ngay.localeCompare(b.ngay));
 
             docs.forEach(d => {
                 const name = d.email.split('@')[0].toUpperCase();
                 detailHtml += `<tr>
-                    <td>${d.ngay.substring(8,10)}/${d.ngay.substring(5,7)}</td>
-                    <td>${name}</td>
-                    <td>${d.gio_vao}</td>
-                    <td>${d.gio_ra}</td>
-                    <td>${d.gio_co_ban}</td>
-                    <td style="color:red">${d.gio_tang_ca}</td>
+                    <td>${d.ngay}</td><td>${name}</td><td>${d.gio_vao}</td>
+                    <td>${d.gio_ra}</td><td>${d.gio_lam}</td>
+                    <td style="color:red; font-weight:bold;">${d.tang_ca}</td>
                     <td>${d.thanh_tien.toLocaleString()}</td>
                 </tr>`;
-
-                if (!summaryData[name]) {
-                    summaryData[name] = { count: 0, totalHrs: 0, totalOt: 0, totalMoney: 0 };
-                }
-                summaryData[name].count += 1;
-                summaryData[name].totalHrs += parseFloat(d.tong_gio);
-                summaryData[name].totalOt += parseFloat(d.gio_tang_ca);
-                summaryData[name].totalMoney += d.thanh_tien;
+                if (!summaryData[name]) summaryData[name] = { days: 0, hrs: 0, ot: 0, money: 0 };
+                summaryData[name].days += 1;
+                summaryData[name].hrs += parseFloat(d.gio_lam);
+                summaryData[name].ot += parseFloat(d.tang_ca);
+                summaryData[name].money += d.thanh_tien;
             });
-
             document.getElementById('detailBody').innerHTML = detailHtml;
 
-            if (user.email === ADMIN_EMAIL) {
-                let summaryHtml = '';
-                let stt = 1;
-                for (let name in summaryData) {
-                    summaryHtml += `<tr>
-                        <td>${stt++}</td>
-                        <td style="text-align:left;">${name}</td>
-                        <td>${summaryData[name].count}</td>
-                        <td>${summaryData[name].totalHrs.toFixed(2)}</td>
-                        <td>${summaryData[name].totalOt.toFixed(2)}</td>
-                        <td style="font-weight:bold;">${summaryData[name].totalMoney.toLocaleString()}</td>
-                    </tr>`;
+            if (ADMIN_LIST.includes(user.email)) {
+                let sHtml = ''; let stt = 1;
+                for (let n in summaryData) {
+                    sHtml += `<tr><td>${stt++}</td><td>${n}</td>
+                        <td>${summaryData[n].days}</td><td>${summaryData[n].hrs.toFixed(2)}</td>
+                        <td>${summaryData[n].ot.toFixed(2)}</td>
+                        <td style="font-weight:bold; color:blue;">${summaryData[n].money.toLocaleString()}</td></tr>`;
                 }
-                document.getElementById('summaryBody').innerHTML = summaryHtml;
+                document.getElementById('summaryBody').innerHTML = sHtml;
             }
         });
     }
 
-    function exportDetail() {
-        const wb = XLSX.utils.table_to_book(document.getElementById("detailTable"));
-        XLSX.writeFile(wb, "Chi_tiet_luong.xlsx");
-    }
-
-    function exportSummary() {
-        const wb = XLSX.utils.table_to_book(document.getElementById("summaryTable"));
-        XLSX.writeFile(wb, "Tong_hop_luong.xlsx");
+    function exportExcel(tableId, name) {
+        const wb = XLSX.utils.table_to_book(document.getElementById(tableId));
+        XLSX.writeFile(wb, name + "_" + document.getElementById('filterMonth').value + ".xlsx");
     }
 </script>
 </body>
