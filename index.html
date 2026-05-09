@@ -20,15 +20,12 @@
         .card-blue { background: #eef6ff; border: 1px solid #d0e3ff; }
         .card h3 { margin: 0 0 20px 0; font-size: 1.2rem; font-weight: 700; }
 
-        /* Form Layout */
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 5px; }
         .input-group label { font-size: 0.9rem; font-weight: 600; color: #555; }
         
         input, select { padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; width: 100%; box-sizing: border-box; outline: none; background: white; }
         input:focus { border-color: var(--primary-blue); }
-        
-        /* Chặn gõ phím, chỉ cho phép chọn */
         input[type="date"], input[type="time"] { cursor: pointer; }
 
         .btn-save { background: var(--primary-blue); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; text-transform: uppercase; }
@@ -50,7 +47,6 @@
 <body>
 
 <div class="container">
-    <!-- AUTHENTICATION -->
     <div id="auth-section" class="auth-container">
         <h2 id="auth-title" style="text-align:center; margin-bottom:25px;">Đăng Nhập</h2>
         <div class="input-group" style="margin-bottom:10px;">
@@ -71,7 +67,6 @@
         <a class="link-toggle" id="toggle-link" onclick="toggleAuth()">Chưa có tài khoản? Đăng ký ngay</a>
     </div>
 
-    <!-- MAIN APP -->
     <div id="main-content" class="hidden">
         <div class="header-top">
             <div style="font-weight: bold; font-size: 1.1rem;">User: <span id="user-display"></span></div>
@@ -124,7 +119,6 @@
             </table>
         </div>
 
-        <!-- ADMIN SECTION -->
         <div id="admin-section" class="hidden" style="margin-top: 40px;">
             <div class="card">
                 <h3 style="color: var(--admin-green);">Báo Cáo Tổng Hợp (Admin)</h3>
@@ -170,13 +164,13 @@
     async function handleAuth() {
         const e = document.getElementById('email').value;
         const p = document.getElementById('password').value;
-        if(!e || !p) return alert("Vui lòng nhập đầy đủ email và mật khẩu!");
+        if(!e || !p) return alert("Vui lòng nhập đầy đủ thông tin!");
         try {
             if(isLogin) {
                 await auth.signInWithEmailAndPassword(e, p);
             } else {
                 const rp = document.getElementById('repassword').value;
-                if(p !== rp) return alert("Mật khẩu xác nhận không đúng!");
+                if(p !== rp) return alert("Mật khẩu không khớp!");
                 await auth.createUserWithEmailAndPassword(e, p);
                 alert("Đăng ký thành công!");
             }
@@ -191,7 +185,6 @@
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-display').innerText = user.email.split('@')[0];
             document.getElementById('workDate').valueAsDate = new Date();
-            if(ADMIN_LIST.includes(user.email)) document.getElementById('admin-section').classList.remove('hidden');
             loadData();
         } else {
             document.getElementById('auth-section').classList.remove('hidden');
@@ -222,14 +215,25 @@
             gio_lam: basic.toFixed(2), tang_ca: ot.toFixed(2), 
             thanh_tien: Math.round(money), thang: date.substring(5, 7)
         });
-        alert("Đã lưu dữ liệu thành công!");
+        alert("Đã lưu dữ liệu!");
     }
 
     function loadData() {
         const user = auth.currentUser;
+        if (!user) return;
+        
         const month = document.getElementById('filterMonth').value;
+        const isAdmin = ADMIN_LIST.includes(user.email);
+        
+        // PHÂN QUYỀN TRUY VẤN: Chỉ Admin mới được xem hết, User thường chỉ lấy đúng UID của mình
         let query = db.collection("bang_luong").where("thang", "==", month);
-        if (!ADMIN_LIST.includes(user.email)) query = query.where("uid", "==", user.uid);
+        
+        if (!isAdmin) {
+            query = query.where("uid", "==", user.uid);
+            document.getElementById('admin-section').classList.add('hidden');
+        } else {
+            document.getElementById('admin-section').classList.remove('hidden');
+        }
 
         query.onSnapshot(snapshot => {
             let detailHtml = ''; let summaryData = {}; let docs = [];
@@ -244,18 +248,22 @@
                     <td style="color:red; font-weight:bold;">${d.tang_ca}</td>
                     <td>${d.thanh_tien.toLocaleString()}</td>
                 </tr>`;
-                if (!summaryData[name]) summaryData[name] = { days: 0, hrs: 0, ot: 0, money: 0 };
-                summaryData[name].days += 1;
-                summaryData[name].hrs += parseFloat(d.gio_lam);
-                summaryData[name].ot += parseFloat(d.tang_ca);
-                summaryData[name].money += d.thanh_tien;
+                
+                if (isAdmin) {
+                    if (!summaryData[name]) summaryData[name] = { days: 0, hrs: 0, ot: 0, money: 0 };
+                    summaryData[name].days += 1;
+                    summaryData[name].hrs += parseFloat(d.gio_lam);
+                    summaryData[name].ot += parseFloat(d.tang_ca);
+                    summaryData[name].money += d.thanh_tien;
+                }
             });
+            
             document.getElementById('detailBody').innerHTML = detailHtml;
 
-            if (ADMIN_LIST.includes(user.email)) {
+            if (isAdmin) {
                 let sHtml = ''; let stt = 1;
                 for (let n in summaryData) {
-                    sHtml += `<tr><td>${stt++}</td><td>${n}</td>
+                    sHtml += `<tr><td>${stt++}</td><td style="font-weight:bold;">${n}</td>
                         <td>${summaryData[n].days}</td><td>${summaryData[n].hrs.toFixed(2)}</td>
                         <td>${summaryData[n].ot.toFixed(2)}</td>
                         <td style="font-weight:bold; color:blue;">${summaryData[n].money.toLocaleString()}</td></tr>`;
