@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý 2026 - Admin Control</title>
+    <title>Hệ Thống Quản Lý 2026</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -15,8 +15,9 @@
         .card { background: white; padding: 12px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 10px; border: 1px solid #e1e4e8; }
         input, select { width: 100%; padding: 8px; margin: 4px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
         
-        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 11px; height: 32px; display: inline-flex; align-items: center; justify-content: center; padding: 0 10px; transition: 0.2s; white-space: nowrap; }
-        .btn-main { background: var(--primary); color: white; width: 100%; margin-top: 8px; text-transform: uppercase; height: 42px; font-size: 13px; }
+        /* Nút bấm nhỏ gọn & đồng nhất */
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 11px; height: 30px; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; transition: 0.2s; white-space: nowrap; }
+        .btn-main { background: var(--primary); color: white; width: 100%; margin-top: 8px; text-transform: uppercase; height: 40px; font-size: 13px; }
         
         .header-bar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .btn-group { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -28,16 +29,14 @@
         .hidden { display: none; }
         
         .table-wrapper { overflow-x: auto; margin-top: 10px; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; background: white; }
-        th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; font-size: 11px; }
-        th { background: #f8f9fa; position: sticky; top: 0; }
+        table { width: 100%; border-collapse: collapse; min-width: 650px; background: white; }
+        th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; font-size: 11px; }
+        th { background: #f8f9fa; }
 
-        .grid-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-        .admin-only-field { background: #fff3cd; border: 1px dashed #ffc107; padding: 5px; border-radius: 6px; }
-        
+        .grid-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
         @media (max-width: 600px) {
             .grid-inputs div:first-child { grid-column: span 2; }
-            button { font-size: 10px; padding: 0 5px; }
+            .user-info { font-size: 11px; }
         }
     </style>
 </head>
@@ -63,43 +62,39 @@
         </div>
 
         <div id="admin-menu" class="hidden">
-            <div class="card" style="background: #e8f4fd; border: 1px solid #b8daff;">
-                <h4 style="margin:0 0 8px 0; font-size:12px; color: #004085;">CẤU HÌNH HỆ THỐNG (ADMIN)</h4>
-                <div style="display:flex; gap:8px; align-items: flex-end; flex-wrap: wrap;">
-                    <div style="flex:1; min-width:120px;"><label style="font-size:10px">Lương/công(8h)</label><input type="number" id="cfg-salary" value="1177"></div>
-                    <div style="flex:1; min-width:120px;"><label style="font-size:10px">Tăng ca (+%)</label><input type="number" id="cfg-ot-percent" value="25"></div>
-                    <button class="bg-dark" style="height:35px" onclick="saveConfig()">LƯU CẤU HÌNH</button>
+            <div class="card" style="background: #fff3cd; border: 1px solid #ffeeba;">
+                <h4 style="margin:0 0 8px 0; font-size:12px;">CẤU HÌNH LƯƠNG (ADMIN)</h4>
+                <div style="display:flex; gap:8px; align-items: flex-end;">
+                    <div style="flex:1"><label style="font-size:10px">Lương 1 công (8h)</label><input type="number" id="cfg-salary" value="1177"></div>
+                    <div style="flex:1"><label style="font-size:10px">Tăng ca (+%)</label><input type="number" id="cfg-ot-percent" value="25"></div>
+                    <button class="bg-dark" style="height:35px" onclick="saveConfig()">LƯU</button>
                 </div>
                 <div class="btn-group" style="margin-top:10px;">
-                    <button onclick="switchTab('tab-cong')" class="bg-success" style="flex:1">Xem Lịch Công</button>
-                    <button onclick="switchTab('tab-users')" class="bg-dark" style="flex:1">Quản Lý Nhân Sự</button>
+                    <button onclick="switchTab('tab-cong')" class="bg-success" style="flex:1">Lịch Công</button>
+                    <button onclick="switchTab('tab-users')" class="bg-dark" style="flex:1">Nhân Sự</button>
                 </div>
             </div>
         </div>
 
         <div id="tab-cong">
             <div class="card">
-                <h3 style="margin:0 0 8px 0; font-size:14px;" id="form-title">Nhập Công Hàng Ngày</h3>
+                <h3 style="margin:0 0 8px 0; font-size:14px;">Nhập Dữ Liệu</h3>
                 <input type="hidden" id="edit-id">
                 <div class="grid-inputs">
-                    <div><label style="font-size:10px">Ngày làm</label><input type="date" id="workDate"></div>
-                    <div id="bonus-container" class="hidden admin-only-field">
-                        <label style="font-size:10px; color:#856404; font-weight:bold;">PHỤ CẤP/THƯỞNG (ADMIN)</label>
-                        <input type="number" id="bonus" value="0">
-                    </div>
+                    <div><label style="font-size:10px">Ngày</label><input type="date" id="workDate"></div>
+                    <div><label style="font-size:10px">Phụ cấp/Thưởng riêng</label><input type="number" id="bonus" value="0"></div>
                     <div><label style="font-size:10px">Giờ vào</label><input type="time" id="timeIn" value="08:00"></div>
                     <div><label style="font-size:10px">Giờ ra</label><input type="time" id="timeOut" value="17:00"></div>
                 </div>
                 <button class="btn-main" onclick="saveData()" id="btn-save">LƯU DỮ LIỆU</button>
-                <button id="btn-cancel-edit" class="hidden" style="width:100%; margin-top:5px; background:#6c757d; color:white; height:35px;" onclick="cancelEdit()">HỦY CHỈNH SỬA</button>
             </div>
 
             <div class="card">
-                <div style="display:flex; justify-content: space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-                    <select id="filterMonth" onchange="loadData()" style="width:110px; margin:0; height:32px;"></select>
+                <div style="display:flex; justify-content: space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <select id="filterMonth" onchange="loadData()" style="width:110px; margin:0; height:30px; padding:0 5px;"></select>
                     <div class="btn-group">
                         <button onclick="exportExcel('detail')" class="bg-info">Chi tiết</button>
-                        <button onclick="exportExcel('summary')" class="bg-success">Tổng hợp lương</button>
+                        <button onclick="exportExcel('summary')" class="bg-success">Tổng hợp</button>
                     </div>
                 </div>
                 <div class="table-wrapper">
@@ -117,22 +112,22 @@
                 <input type="password" id="old-pass" placeholder="Mật khẩu cũ">
                 <input type="password" id="new-pass" placeholder="Mật khẩu mới">
                 <input type="password" id="renew-pass" placeholder="Xác nhận mật khẩu mới">
-                <button class="btn-main" onclick="changePassword()">XÁC NHẬN ĐỔI</button>
-                <button class="btn-main" style="background:#6c757d;" onclick="switchTab('tab-cong')">QUAY LẠI</button>
+                <button class="btn-main" onclick="changePassword()">CẬP NHẬT</button>
+                <button class="btn-main" style="background:#6c757d;" onclick="switchTab('tab-cong')">HỦY</button>
             </div>
         </div>
 
         <div id="tab-users" class="hidden">
             <div class="card">
-                <h3 style="font-size:14px;">Danh sách nhân viên</h3>
-                <div class="table-wrapper"><table><thead><tr><th>Tên</th><th>Email</th><th>Thao tác</th></tr></thead><tbody id="userListBody"></tbody></table></div>
+                <h3 style="font-size:14px;">Quản lý nhân viên</h3>
+                <div class="table-wrapper"><table><thead><tr><th>Tên</th><th>Email</th><th>Xóa</th></tr></thead><tbody id="userListBody"></tbody></table></div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
+    // FIREBASE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyDzp1rjYmoxb8iFfMd0mcwgqeVimP4LXkw",
         authDomain: "quanlyluong2026.firebaseapp.com",
@@ -150,7 +145,7 @@
     let currentData = [];
     let sysCfg = { salary: 1177, otPercent: 25 };
 
-    // --- SYSTEM LOGIC ---
+    // --- CONFIG ---
     async function loadConfig() {
         const doc = await db.collection("settings").doc("salary_config").get();
         if(doc.exists) {
@@ -164,14 +159,14 @@
         const p = parseInt(document.getElementById('cfg-ot-percent').value);
         await db.collection("settings").doc("salary_config").set({ salary: s, otPercent: p });
         sysCfg = { salary: s, otPercent: p };
-        alert("Đã cập nhật cấu hình lương!");
+        alert("Đã lưu cấu hình!");
         loadData();
     }
 
     // --- AUTH ---
     function toggleAuth() {
         isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "QUẢN LÝ CÔNG 2026" : "TẠO TÀI KHOẢN MỚI";
+        document.getElementById('auth-title').innerText = isLoginMode ? "QUẢN LÝ CÔNG 2026" : "ĐĂNG KÝ MỚI";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
     }
     async function handleAuth() {
@@ -186,7 +181,7 @@
                 await db.collection("users").doc(res.user.uid).set({ ho_ten: n, email: e });
                 location.reload();
             }
-        } catch (err) { alert("Lỗi: " + err.message); }
+        } catch (err) { alert(err.message); }
     }
 
     auth.onAuthStateChanged(user => {
@@ -195,11 +190,7 @@
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
             const isAdmin = ADMIN_LIST.includes(user.email);
-            if(isAdmin) { 
-                document.getElementById('admin-menu').classList.remove('hidden'); 
-                loadUserList(); 
-                loadConfig();
-            }
+            if(isAdmin) { document.getElementById('admin-menu').classList.remove('hidden'); loadUserList(); loadConfig(); }
             initFilter(); renderTableHeader(isAdmin); loadData();
         } else {
             document.getElementById('auth-section').classList.remove('hidden');
@@ -207,10 +198,10 @@
         }
     });
 
-    // --- DATA HANDLING ---
+    // --- DATA ---
     function renderTableHeader(isAdmin) {
         let h = `<th>Ngày</th><th>Tên</th><th>Công</th><th>TC</th><th>Thưởng</th>`;
-        h += `<th>Duyệt</th><th>Thao tác</th>`;
+        h += isAdmin ? `<th>Duyệt</th><th>Lệnh</th>` : `<th>Thao tác</th>`;
         document.getElementById('table-header').innerHTML = h;
     }
 
@@ -228,113 +219,70 @@
                 currentData.push(d);
                 const approved = d.status === 'approved';
                 html += `<tr><td>${d.ngay.split('-').reverse().slice(0,2).join('/')}</td><td>${d.ho_ten}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${(d.bonus || 0).toLocaleString()}</td>`;
-                
-                // Cột Duyệt (Giữ nguyên cho Admin xác nhận)
-                html += `<td>${approved?'<span style="color:green">✅ Đã Duyệt</span>':(isAdmin ? `<button class="bg-success" onclick="approve('${doc.id}')">Duyệt ngay</button>` : '⏳ Chờ')}</td>`;
-                
-                // Cột Thao tác
-                html += `<td><div class="btn-group">`;
                 if(isAdmin) {
-                    html += `<button class="bg-info" onclick="editEntry('${d.id}')">Sửa</button>`;
-                    html += `<button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button>`;
+                    html += `<td>${approved?'✅':'⏳'}</td><td><div class="btn-group">
+                        <button class="bg-info" style="padding:0 5px;" onclick="editEntry('${d.id}')">Sửa</button>
+                        <button class="bg-danger" style="padding:0 5px;" onclick="deleteData('${d.id}')">Xóa</button>
+                    </div></td>`;
                 } else {
-                    html += approved ? '🔒' : `<button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button>`;
+                    html += `<td>${approved?'🔒':`<button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button>`}</td>`;
                 }
-                html += `</div></td></tr>`;
+                html += `</tr>`;
             });
-            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Không có dữ liệu tháng này</td></tr>';
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
         });
     }
 
     async function saveData() {
         const user = auth.currentUser;
-        const isAdmin = ADMIN_LIST.includes(user.email);
         const id = document.getElementById('edit-id').value;
         const date = document.getElementById('workDate').value;
         const tIn = document.getElementById('timeIn').value;
         const tOut = document.getElementById('timeOut').value;
-        
-        // Chỉ lấy giá trị bonus nếu là Admin đang sửa, ngược lại mặc định 0 hoặc giữ nguyên
-        let bonus = 0;
-        if(id && isAdmin) {
-            bonus = parseInt(document.getElementById('bonus').value) || 0;
-        }
-
-        if(!date) return alert("Vui lòng chọn ngày!");
+        const bonus = parseInt(document.getElementById('bonus').value) || 0;
+        if(!date) return alert("Chọn ngày!");
 
         let diff = (new Date(`2026-01-01 ${tOut}`) - new Date(`2026-01-01 ${tIn}`)) / 3600000;
         if(diff < 0) diff += 24;
-        let total = Math.max(0, diff - 0.75); // Trừ 45p nghỉ
+        let total = Math.max(0, diff - 0.75); // Trừ 45p nghỉ mặc định
         
         const payload = {
-            ngay: date, gio_vao: tIn, gio_ra: tOut,
+            uid: user.uid, ho_ten: user.displayName || user.email,
+            ngay: date, gio_vao: tIn, gio_ra: tOut, bonus: bonus,
             gio_lam: total > 8 ? 8 : total.toFixed(2),
             tang_ca: total > 8 ? (total - 8).toFixed(2) : 0,
-            thang: date.substring(5,7)
+            thang: date.substring(5,7), status: 'pending'
         };
 
-        // Nếu là Admin sửa thì mới cập nhật Bonus và trạng thái có thể giữ nguyên
-        if(id && isAdmin) {
-            payload.bonus = bonus;
-        } else if(!id) {
-            // Đây là nhân viên tạo mới
-            payload.uid = user.uid;
-            payload.ho_ten = user.displayName || user.email;
-            payload.bonus = 0;
-            payload.status = 'pending';
-        }
-
-        try {
-            if(id) {
-                await db.collection("bang_luong").doc(id).update(payload);
-                alert("Đã cập nhật dòng công!");
-                cancelEdit();
-            } else {
-                await db.collection("bang_luong").add(payload);
-                alert("Đã lưu công thành công!");
-            }
-        } catch(e) { alert("Lỗi khi lưu: " + e.message); }
+        if(id) await db.collection("bang_luong").doc(id).update(payload);
+        else await db.collection("bang_luong").add(payload);
+        
+        document.getElementById('edit-id').value = "";
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('bonus').value = 0;
+        alert("Đã lưu!");
     }
 
     function editEntry(id) {
         const item = currentData.find(x => x.id === id);
-        const isAdmin = ADMIN_LIST.includes(auth.currentUser.email);
-        
         document.getElementById('edit-id').value = id;
         document.getElementById('workDate').value = item.ngay;
         document.getElementById('timeIn').value = item.gio_vao;
         document.getElementById('timeOut').value = item.gio_ra;
-        
-        // Hiện ô phụ cấp nếu là Admin
-        if(isAdmin) {
-            document.getElementById('bonus-container').classList.remove('hidden');
-            document.getElementById('bonus').value = item.bonus || 0;
-        }
-
-        document.getElementById('form-title').innerText = "CHỈNH SỬA CÔNG: " + item.ho_ten;
-        document.getElementById('btn-save').innerText = "CẬP NHẬT THAY ĐỔI";
-        document.getElementById('btn-cancel-edit').classList.remove('hidden');
+        document.getElementById('bonus').value = item.bonus || 0;
+        document.getElementById('btn-save').innerText = "CẬP NHẬT";
         window.scrollTo(0,0);
     }
 
-    function cancelEdit() {
-        document.getElementById('edit-id').value = "";
-        document.getElementById('bonus-container').classList.add('hidden');
-        document.getElementById('form-title').innerText = "Nhập Công Hàng Ngày";
-        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
-        document.getElementById('btn-cancel-edit').classList.add('hidden');
-        document.getElementById('bonus').value = 0;
-    }
-
-    // --- EXPORT ---
+    // --- XUẤT EXCEL ---
     function exportExcel(type) {
-        if(currentData.length === 0) return alert("Không có dữ liệu!");
+        if(currentData.length === 0) return alert("Trống!");
         let exportData = [];
         const m = document.getElementById('filterMonth').value;
 
         if(type === 'detail') {
             exportData = currentData.map(i => ({
-                "Ngày": i.ngay, "Họ Tên": i.ho_ten, "Giờ Vào": i.gio_vao, "Giờ Ra": i.gio_ra, "Công (8h)": i.gio_lam, "Tăng Ca": i.tang_ca, "Thưởng/Phụ Cấp": i.bonus, "Trạng Thái": i.status
+                "Ngày": i.ngay, "Nhân viên": i.ho_ten, "Vào": i.gio_vao, "Ra": i.gio_ra, "Công": i.gio_lam, "TC": i.tang_ca, "Thưởng": i.bonus
             }));
         } else {
             const summary = {};
@@ -346,21 +294,21 @@
             });
             exportData = Object.values(summary).map(s => {
                 const donGia1h = sysCfg.salary / 8;
-                const donGiaTC = donGia1h * (1 + (sysCfg.otPercent/100));
+                const donGiaTC = donGia1h * (1 + (sysCfg.otPercent/100)); // Lương cơ bản + % tăng ca
                 const tienCong = (s.cong / 8) * sysCfg.salary;
                 const tienTC = s.tc * donGiaTC;
                 return {
-                    "Tên Nhân Viên": s.ten,
-                    "Tổng Ngày Công": (s.cong / 8).toFixed(2),
-                    "Tổng Giờ Tăng Ca": s.tc.toFixed(2),
-                    "Tổng Phụ Cấp (Admin cộng)": s.bonus.toLocaleString(),
-                    "THỰC NHẬN": Math.round(tienCong + tienTC + s.bonus).toLocaleString() + " VNĐ"
+                    "Tên": s.ten,
+                    "Ngày Công": (s.cong / 8).toFixed(2),
+                    "Giờ Tăng Ca": s.tc.toFixed(2),
+                    "Tổng Phụ Cấp": s.bonus.toLocaleString(),
+                    "THÀNH TIỀN": Math.round(tienCong + tienTC + s.bonus).toLocaleString() + " VNĐ"
                 };
             });
         }
         const ws = XLSX.utils.json_to_sheet(exportData);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "BangLuong");
+        XLSX.utils.book_append_sheet(wb, ws, "Bao_Cao");
         XLSX.writeFile(wb, `Bao_Cao_${type}_T${m}.xlsx`);
     }
 
@@ -368,9 +316,40 @@
     function switchTab(t) {
         ['tab-cong', 'tab-users', 'tab-profile'].forEach(id => document.getElementById(id).classList.toggle('hidden', id !== t));
     }
-    async function approve(id) { 
-        if(confirm("Xác nhận duyệt ngày công này?")) {
-            await db.collection("bang_luong").doc(id).update({status:'approved'}); 
-        }
+    async function changePassword() {
+        const user = auth.currentUser;
+        const oldP = document.getElementById('old-pass').value;
+        const newP = document.getElementById('new-pass').value;
+        const reP = document.getElementById('renew-pass').value;
+        if(newP !== reP) return alert("Mật khẩu mới không khớp!");
+        try {
+            const cred = firebase.auth.EmailAuthProvider.credential(user.email, oldP);
+            await user.reauthenticateWithCredential(cred);
+            await user.updatePassword(newP);
+            alert("Xong!"); switchTab('tab-cong');
+        } catch (e) { alert("Mật khẩu cũ sai!"); }
     }
-    async function deleteData(id)
+    async function deleteData(id) { if(confirm("Xóa?")) await db.collection("bang_luong").doc(id).delete(); }
+    function logout() { auth.signOut(); location.reload(); }
+    function initFilter() {
+        const s = document.getElementById('filterMonth');
+        if(s.options.length > 0) return;
+        const curr = new Date().getMonth() + 1;
+        for(let i=1; i<=12; i++) {
+            let v = i < 10 ? '0'+i : i;
+            s.add(new Option("Tháng " + v, v, i === curr, i === curr));
+        }
+        document.getElementById('workDate').valueAsDate = new Date();
+    }
+    function loadUserList() {
+        db.collection("users").onSnapshot(snap => {
+            let h = ''; snap.forEach(doc => {
+                h += `<tr><td>${doc.data().ho_ten}</td><td>${doc.data().email}</td><td><button class="bg-danger" onclick="deleteUser('${doc.id}')">Xóa</button></td></tr>`;
+            });
+            document.getElementById('userListBody').innerHTML = h;
+        });
+    }
+    async function deleteUser(id) { if(confirm("Xóa nhân viên?")) await db.collection("users").doc(id).delete(); }
+</script>
+</body>
+</html>
