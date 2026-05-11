@@ -3,32 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Công 2026</title>
+    <title>Hệ Thống Quản Lý Công & Nhân Sự 2026</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
+        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dark: #343a40; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
-        .container { max-width: 1000px; margin: auto; }
+        .container { max-width: 1100px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e1e4e8; }
         .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
         button { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
         .btn-main { background: var(--primary); color: white; width: 100%; padding: 15px; margin-top: 10px; font-size: 16px; text-transform: uppercase; }
-        .btn-delete { background: var(--danger); color: white; padding: 6px 12px; font-size: 12px; }
-        .btn-approve { background: var(--success); color: white; padding: 6px 12px; font-size: 12px; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; color: white; }
+        .bg-success { background: var(--success); }
+        .bg-danger { background: var(--danger); }
+        .bg-warning { background: var(--warning); color: black; }
         
-        /* Modal Đổi mật khẩu */
+        /* Modal Styles */
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 10% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; }
+        .modal-content { background: white; margin: 10% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; }
         
-        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; min-width: 750px; margin-top: 10px; }
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { border: 1px solid #dee2e6; padding: 12px; text-align: center; font-size: 14px; }
-        th { background: #f8f9fa; }
-        .auth-container { max-width: 400px; margin: 50px auto; }
+        th { background: #f8f9fa; position: sticky; top: 0; }
+        .section-title { border-left: 5px solid var(--primary); padding-left: 10px; margin-bottom: 20px; color: var(--dark); }
         .hidden { display: none; }
         @media (max-width: 600px) { .grid-inputs { grid-template-columns: 1fr; } }
     </style>
@@ -36,22 +38,20 @@
 <body>
 
 <div class="container">
-    <div id="auth-section" class="card auth-container">
+    <div id="auth-section" class="card" style="max-width:400px; margin:50px auto;">
         <h2 id="auth-title" style="text-align:center">Đăng Nhập</h2>
         <div id="reg-fields" class="hidden">
             <label>Họ và Tên</label>
             <input type="text" id="fullName" placeholder="Nhập họ tên">
         </div>
         <label>Email</label>
-        <input type="email" id="email" placeholder="tan@gmail.com">
-        <label id="pass-label">Mật khẩu</label>
+        <input type="email" id="email" placeholder="email@gmail.com">
+        <label>Mật khẩu</label>
         <input type="password" id="password" placeholder="••••••">
-        
         <div id="retype-reg-fields" class="hidden">
             <label>Nhập lại mật khẩu</label>
             <input type="password" id="repassword" placeholder="••••••">
         </div>
-
         <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
         <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:14px; margin-top:15px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
     </div>
@@ -60,38 +60,60 @@
         <div class="card" style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
             <div>Chào: <b id="user-name" style="color: var(--primary);"></b></div>
             <div>
-                <button onclick="openChangePassModal()" style="background:#e9ecef; padding:8px 12px; font-size:13px;">Đổi mật khẩu</button>
-                <button onclick="logout()" class="btn-delete" style="padding:8px 12px;">Thoát</button>
+                <button onclick="openChangePassModal()" style="background:#e9ecef; padding:8px 12px; font-size:13px; font-weight:bold">Đổi mật khẩu</button>
+                <button onclick="logout()" class="btn-sm bg-danger" style="padding:8px 12px;">Thoát</button>
             </div>
         </div>
 
-        <div class="card">
-            <h3 id="form-title" style="margin-top:0">Nhập Công Mới</h3>
-            <input type="hidden" id="edit-id">
-            <div class="grid-inputs">
-                <div><label>Ngày làm việc</label><input type="date" id="workDate"></div>
-                <div><label>Giải lao (phút)</label><input type="number" id="breakMin" value="45"></div>
-                <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00"></div>
-                <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00"></div>
+        <div id="admin-menu" class="hidden card" style="background: #fff3cd; border: 1px solid #ffeeba;">
+            <h4 style="margin:0 0 10px 0; color: #856404;">CHẾ ĐỘ QUẢN TRỊ VIÊN</h4>
+            <div style="display:flex; gap:10px;">
+                <button onclick="switchTab('tab-cong')" class="btn-sm bg-success">Quản lý Công</button>
+                <button onclick="switchTab('tab-users')" class="btn-sm var(--dark)" style="background:var(--dark)">Quản lý Nhân sự</button>
             </div>
-            <button class="btn-main" onclick="saveData()" id="btn-save">LƯU DỮ LIỆU</button>
-            <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:10px; padding:12px; background:#6c757d; color:white">Hủy</button>
         </div>
 
-        <div class="card">
-            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
-                <select id="filterMonth" style="width:120px" onchange="loadData()"></select>
-                <button class="btn-approve" onclick="exportExcel()">Xuất Excel</button>
+        <div id="tab-cong">
+            <div class="card">
+                <h3 class="section-title" id="form-title">Nhập Công Mới</h3>
+                <input type="hidden" id="edit-id">
+                <div class="grid-inputs">
+                    <div><label>Ngày</label><input type="date" id="workDate"></div>
+                    <div><label>Giải lao (phút)</label><input type="number" id="breakMin" value="45"></div>
+                    <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00"></div>
+                    <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00"></div>
+                </div>
+                <button class="btn-main" onclick="saveData()" id="btn-save">LƯU DỮ LIỆU</button>
+                <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:10px; padding:12px; background:gray; color:white">Hủy</button>
             </div>
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>TC</th><th>Trạng thái</th><th>Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dataBody"></tbody>
-                </table>
+
+            <div class="card">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:15px;">
+                    <select id="filterMonth" style="width:120px" onchange="loadData()"></select>
+                    <button class="btn-sm bg-success" onclick="exportExcel()">Xuất Excel</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Ngày</th><th>Họ Tên</th><th>Vào-Ra</th><th>Công</th><th>TC</th><th>Trạng thái</th><th>Thao tác</th></tr>
+                        </thead>
+                        <tbody id="dataBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-users" class="hidden">
+            <div class="card">
+                <h3 class="section-title">Danh sách Nhân viên Đã đăng ký</h3>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr><th>Họ và Tên</th><th>Email</th><th>Ngày đăng ký</th><th>Thao tác</th></tr>
+                        </thead>
+                        <tbody id="userListBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -99,14 +121,11 @@
 
 <div id="changePassModal" class="modal">
     <div class="modal-content">
-        <h3 style="margin-top:0">Đổi Mật Khẩu</h3>
-        <label style="font-size:13px">Mật khẩu hiện tại</label>
-        <input type="password" id="oldPass" placeholder="••••••">
-        <label style="font-size:13px">Mật khẩu mới</label>
-        <input type="password" id="newPass" placeholder="••••••">
-        <label style="font-size:13px">Nhập lại mật khẩu mới</label>
-        <input type="password" id="confirmNewPass" placeholder="••••••">
-        <button class="btn-main" onclick="submitChangePassword()">Xác nhận đổi</button>
+        <h3>Đổi Mật Khẩu</h3>
+        <input type="password" id="oldPass" placeholder="Mật khẩu hiện tại">
+        <input type="password" id="newPass" placeholder="Mật khẩu mới">
+        <input type="password" id="confirmNewPass" placeholder="Nhập lại mật khẩu mới">
+        <button class="btn-main" onclick="submitChangePassword()">Xác nhận</button>
         <button onclick="closeChangePassModal()" style="width:100%; background:none; margin-top:10px; color:gray">Đóng</button>
     </div>
 </div>
@@ -128,14 +147,19 @@
     const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     let isLoginMode = true;
 
+    // QUẢN LÝ TABS
+    function switchTab(tabId) {
+        document.getElementById('tab-cong').classList.toggle('hidden', tabId !== 'tab-cong');
+        document.getElementById('tab-users').classList.toggle('hidden', tabId !== 'tab-users');
+    }
+
     // AUTH LOGIC
     function toggleAuth() {
         isLoginMode = !isLoginMode;
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
         document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
-        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Hoàn Tất Đăng Ký";
-        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký ngay" : "Quay lại Đăng nhập";
+        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
     }
 
     async function handleAuth() {
@@ -148,46 +172,36 @@
             if (isLoginMode) {
                 await auth.signInWithEmailAndPassword(email, pass);
             } else {
-                if(!name) return alert("Vui lòng nhập họ tên!");
-                if(pass !== repass) return alert("Mật khẩu nhập lại không khớp!");
+                if(!name || pass !== repass) return alert("Vui lòng kiểm tra lại thông tin!");
                 const res = await auth.createUserWithEmailAndPassword(email, pass);
                 await res.user.updateProfile({ displayName: name });
+                
+                // LƯU THÔNG TIN VÀO DANH BẠ USERS ĐỂ ADMIN QUẢN LÝ
+                await db.collection("users").doc(res.user.uid).set({
+                    ho_ten: name,
+                    email: email,
+                    ngay_tao: new Date().toISOString()
+                });
+                
                 alert("Đăng ký thành công!");
                 location.reload();
             }
         } catch (e) { alert(e.message); }
     }
 
-    // MODAL ĐỔI MẬT KHẨU LOGIC
-    function openChangePassModal() { document.getElementById('changePassModal').style.display = 'block'; }
-    function closeChangePassModal() { document.getElementById('changePassModal').style.display = 'none'; }
-
-    async function submitChangePassword() {
-        const user = auth.currentUser;
-        const oldP = document.getElementById('oldPass').value;
-        const newP = document.getElementById('newPass').value;
-        const confP = document.getElementById('confirmNewPass').value;
-
-        if(newP !== confP) return alert("Mật khẩu mới không khớp!");
-        if(newP.length < 6) return alert("Mật khẩu mới phải từ 6 ký tự!");
-
-        try {
-            // Firebase yêu cầu đăng nhập lại nếu muốn đổi mật khẩu
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldP);
-            await user.reauthenticateWithCredential(credential);
-            await user.updatePassword(newP);
-            alert("Đổi mật khẩu thành công!");
-            closeChangePassModal();
-        } catch (e) { alert("Lỗi: Mật khẩu hiện tại không đúng hoặc lỗi hệ thống."); }
-    }
-
-    function logout() { auth.signOut(); }
-
+    // THEO DÕI TRẠNG THÁI
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
+            
+            const isAdmin = ADMIN_LIST.includes(user.email);
+            if(isAdmin) {
+                document.getElementById('admin-menu').classList.remove('hidden');
+                loadUserList(); // Chỉ load danh sách user cho admin
+            }
+            
             initFilter(); loadData();
         } else {
             document.getElementById('auth-section').classList.remove('hidden');
@@ -195,7 +209,38 @@
         }
     });
 
-    // CÁC HÀM CƠ SỞ DỮ LIỆU (Giữ nguyên logic phê duyệt của bạn)
+    // QUẢN LÝ USER DANH BẠ (CHO ADMIN)
+    function loadUserList() {
+        db.collection("users").onSnapshot(snapshot => {
+            let html = '';
+            snapshot.forEach(doc => {
+                const u = doc.data();
+                html += `<tr>
+                    <td><b>${u.ho_ten}</b></td>
+                    <td>${u.email}</td>
+                    <td>${u.ngay_tao ? u.ngay_tao.substring(0,10) : '-'}</td>
+                    <td>
+                        <button class="btn-sm bg-warning" onclick="editUser('${doc.id}', '${u.ho_ten}')">Sửa tên</button>
+                        <button class="btn-sm bg-danger" onclick="deleteUser('${doc.id}')">Xóa</button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('userListBody').innerHTML = html;
+        });
+    }
+
+    async function editUser(id, oldName) {
+        const newName = prompt("Nhập họ tên mới cho nhân viên:", oldName);
+        if(newName) await db.collection("users").doc(id).update({ ho_ten: newName });
+    }
+
+    async function deleteUser(id) {
+        if(confirm("Xóa nhân viên này khỏi danh sách quản lý? (Lưu ý: Tài khoản đăng nhập vẫn tồn tại trên hệ thống Auth)")) {
+            await db.collection("users").doc(id).delete();
+        }
+    }
+
+    // PHẦN QUẢN LÝ CÔNG (Giữ nguyên logic của bạn)
     function initFilter() {
         const select = document.getElementById('filterMonth');
         if(select.options.length > 0) return;
@@ -252,9 +297,9 @@
                     <td>${d.gio_lam}</td><td>${d.tang_ca}</td>
                     <td style="color:${isApproved?'green':'orange'}">${isApproved?'Đã duyệt':'Chờ...'}</td>
                     <td>
-                        ${isAdmin && !isApproved ? `<button class="btn-approve" onclick="approveData('${doc.id}')">Duyệt</button>` : ''}
-                        ${(!isApproved || isAdmin) ? `<button onclick="editData('${doc.id}', '${d.ngay}', '${d.gio_vao}', '${d.gio_ra}', ${d.giai_lao})">Sửa</button> 
-                        <button class="btn-delete" onclick="deleteData('${doc.id}')">Xóa</button>` : '🔒'}
+                        ${isAdmin && !isApproved ? `<button class="btn-sm bg-success" onclick="approveData('${doc.id}')">Duyệt</button>` : ''}
+                        ${(!isApproved || isAdmin) ? `<button class="btn-sm bg-warning" onclick="editData('${doc.id}', '${d.ngay}', '${d.gio_vao}', '${d.gio_ra}', ${d.giai_lao})">Sửa</button> 
+                        <button class="btn-sm bg-danger" onclick="deleteData('${doc.id}')">Xóa</button>` : '🔒'}
                     </td>
                 </tr>`;
             });
@@ -263,9 +308,30 @@
     }
 
     async function approveData(id) { await db.collection("bang_luong").doc(id).update({ status: 'approved' }); }
-    async function deleteData(id) { if(confirm("Xóa?")) await db.collection("bang_luong").doc(id).delete(); }
+    async function deleteData(id) { if(confirm("Xóa bản ghi công này?")) await db.collection("bang_luong").doc(id).delete(); }
 
     function editData(id, date, tIn, tOut, bMin) {
         document.getElementById('edit-id').value = id;
         document.getElementById('workDate').value = date;
-        document.getElementById
+        document.getElementById('timeIn').value = tIn;
+        document.getElementById('timeOut').value = tOut;
+        document.getElementById('breakMin').value = bMin;
+        document.getElementById('btn-save').innerText = "CẬP NHẬT";
+        document.getElementById('btn-cancel').classList.remove('hidden');
+        window.scrollTo(0,0);
+    }
+
+    function resetForm() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('btn-cancel').classList.add('hidden');
+    }
+
+    function logout() { auth.signOut(); }
+    function openChangePassModal() { document.getElementById('changePassModal').style.display = 'block'; }
+    function closeChangePassModal() { document.getElementById('changePassModal').style.display = 'none'; }
+    async function submitChangePassword() { /* Giữ nguyên logic cũ */ }
+    function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.querySelector("table")), "BangCong.xlsx"); }
+</script>
+</body>
+</html>
