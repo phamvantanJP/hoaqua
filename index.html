@@ -3,105 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Công & Nhân Sự 2026</title>
+    <title>Hệ Thống Quản Lý Công 2026</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dark: #343a40; }
-        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 10px; }
+        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dark: #343a40; --info: #17a2b8; }
+        body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 8px; }
         .container { max-width: 1100px; margin: auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e1e4e8; }
-        .grid-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
-        button { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.3s; }
-        .btn-main { background: var(--primary); color: white; width: 100%; padding: 15px; margin-top: 10px; font-size: 16px; text-transform: uppercase; }
-        .btn-sm { padding: 6px 12px; font-size: 12px; color: white; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid #e1e4e8; }
+        
+        input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; }
+        
+        /* Nút bấm đồng bộ */
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.3s; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-main { background: var(--primary); color: white; width: 100%; padding: 12px; margin-top: 8px; text-transform: uppercase; }
+        
+        /* Nhóm nút nhỏ cho Mobile */
+        .btn-group { display: flex; gap: 4px; justify-content: center; }
+        .btn-sm { padding: 6px 10px; color: white; font-size: 11px; min-width: 60px; height: 30px; }
+        
         .bg-success { background: var(--success); }
         .bg-danger { background: var(--danger); }
         .bg-warning { background: var(--warning); color: black; }
+        .bg-info { background: var(--info); }
+        .bg-dark { background: var(--dark); }
         
-        /* Modal Styles */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 10% auto; padding: 25px; border-radius: 12px; width: 90%; max-width: 450px; }
-        
-        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 700px; }
-        th, td { border: 1px solid #dee2e6; padding: 12px; text-align: center; font-size: 14px; }
-        th { background: #f8f9fa; }
         .hidden { display: none; }
-        @media (max-width: 600px) { .grid-inputs { grid-template-columns: 1fr; } }
+        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; font-size: 13px; }
+        th { background: #f8f9fa; }
+
+        /* Tối ưu lưới nhập liệu trên Mobile */
+        .grid-inputs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        @media (max-width: 600px) {
+            .grid-inputs div:first-child { grid-column: span 2; } 
+            .btn-sm { min-width: 50px; font-size: 10px; padding: 4px 6px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="auth-section" class="card" style="max-width:400px; margin:50px auto;">
-        <h2 id="auth-title" style="text-align:center">Đăng Nhập</h2>
+    <div id="auth-section" class="card" style="max-width:380px; margin:40px auto;">
+        <h2 id="auth-title" style="text-align:center; font-size: 20px;">Đăng Nhập</h2>
         <div id="reg-fields" class="hidden">
-            <label>Họ và Tên</label>
-            <input type="text" id="fullName" placeholder="Nhập họ tên">
+            <label style="font-size:12px">Họ và Tên</label>
+            <input type="text" id="fullName" placeholder="Nhập tên">
         </div>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="password" placeholder="Mật khẩu">
+        <label style="font-size:12px">Email</label>
+        <input type="email" id="email" placeholder="email@gmail.com">
+        <label style="font-size:12px">Mật khẩu</label>
+        <input type="password" id="password" placeholder="••••••">
         <div id="retype-reg-fields" class="hidden">
-            <input type="password" id="repassword" placeholder="Nhập lại mật khẩu">
+            <label style="font-size:12px">Nhập lại mật khẩu</label>
+            <input type="password" id="repassword" placeholder="••••••">
         </div>
         <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
-        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:14px; margin-top:15px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký</p>
+        <p id="forgot-pw-box" style="text-align:right; margin-top:8px;">
+            <a href="#" onclick="forgotPassword()" style="font-size:12px; color: #666; text-decoration:none;">Quên mật khẩu?</a>
+        </p>
+        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px; margin-top:12px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
     </div>
 
     <div id="main-content" class="hidden">
-        <div class="card" style="display:flex; justify-content: space-between; align-items:center;">
-            <div>Chào: <b id="user-name" style="color: var(--primary);"></b></div>
-            <button onclick="logout()" class="btn-sm bg-danger">Thoát</button>
+        <div class="card" style="display:flex; justify-content: space-between; align-items:center; padding: 10px 15px;">
+            <div style="font-size:14px">Chào: <b id="user-name" style="color: var(--primary);"></b></div>
+            <div style="display:flex; gap:5px;">
+                <button onclick="switchTab('tab-profile')" class="btn-sm bg-info">Cài đặt</button>
+                <button onclick="logout()" class="btn-sm bg-danger">Thoát</button>
+            </div>
         </div>
 
-        <div id="admin-menu" class="hidden card" style="background: #fff3cd;">
-            <h4 style="margin:0 0 10px 0;">QUẢN TRỊ VIÊN</h4>
-            <div style="display:flex; gap:10px;">
-                <button onclick="switchTab('tab-cong')" class="btn-sm bg-success">Lịch Công</button>
-                <button onclick="switchTab('tab-users')" class="btn-sm" style="background:var(--dark)">Nhân Sự</button>
+        <div id="admin-menu" class="hidden card" style="background: #fff3cd; border: 1px solid #ffeeba;">
+            <h4 style="margin:0 0 8px 0; color: #856404; font-size:13px;">QUẢN TRỊ</h4>
+            <div style="display:flex; gap:6px;">
+                <button onclick="switchTab('tab-cong')" class="btn-sm bg-success" style="flex:1">Lịch Công</button>
+                <button onclick="switchTab('tab-users')" class="btn-sm bg-dark" style="flex:1">Nhân Sự</button>
             </div>
         </div>
 
         <div id="tab-cong">
             <div class="card">
-                <h3 id="form-title">Nhập Công</h3>
+                <h3 style="margin-top:0; font-size:15px;">Nhập Công Mới</h3>
                 <input type="hidden" id="edit-id">
                 <div class="grid-inputs">
-                    <div><label>Ngày</label><input type="date" id="workDate"></div>
-                    <div><label>Giải lao</label><input type="number" id="breakMin" value="45"></div>
-                    <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00"></div>
-                    <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00"></div>
+                    <div><label style="font-size:12px">Ngày</label><input type="date" id="workDate"></div>
+                    <div><label style="font-size:12px">Giải lao (phút)</label><input type="number" id="breakMin" value="45"></div>
+                    <div><label style="font-size:12px">Giờ vào</label><input type="time" id="timeIn" value="08:00"></div>
+                    <div><label style="font-size:12px">Giờ ra</label><input type="time" id="timeOut" value="17:00"></div>
                 </div>
                 <button class="btn-main" onclick="saveData()" id="btn-save">LƯU DỮ LIỆU</button>
-                <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:5px;">Hủy</button>
+                <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:5px; background:#6c757d; color:white; padding:10px">Hủy</button>
             </div>
 
             <div class="card">
-                <select id="filterMonth" style="width:120px; margin-bottom:10px;" onchange="loadData()"></select>
+                <select id="filterMonth" style="width:140px; height: 35px;" onchange="loadData()"></select>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr id="table-header">
-                                </tr>
-                        </thead>
+                        <thead><tr id="table-header"></tr></thead>
                         <tbody id="dataBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <div id="tab-profile" class="hidden">
+            <div class="card" style="max-width:350px; margin:auto;">
+                <h3 style="font-size:15px; text-align:center;">Đổi Mật Khẩu</h3>
+                <input type="password" id="old-pass" placeholder="Mật khẩu cũ">
+                <input type="password" id="new-pass" placeholder="Mật khẩu mới">
+                <input type="password" id="renew-pass" placeholder="Nhắc lại mật khẩu mới">
+                <button class="btn-main" onclick="changePassword()">CẬP NHẬT</button>
+                <button class="btn-main bg-dark" onclick="switchTab('tab-cong')">HỦY BỎ</button>
+            </div>
+        </div>
+
         <div id="tab-users" class="hidden">
             <div class="card">
-                <h3>Danh sách Nhân viên</h3>
+                <h3 style="font-size:15px;">Danh sách Nhân viên</h3>
                 <div class="table-wrapper">
                     <table>
-                        <thead>
-                            <tr><th>Họ Tên</th><th>Email</th><th>Thao tác</th></tr>
-                        </thead>
+                        <thead><tr><th>Họ Tên</th><th>Email</th><th>Thao tác</th></tr></thead>
                         <tbody id="userListBody"></tbody>
                     </table>
                 </div>
@@ -126,16 +150,15 @@
     const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     let isLoginMode = true;
 
-    function switchTab(tabId) {
-        document.getElementById('tab-cong').classList.toggle('hidden', tabId !== 'tab-cong');
-        document.getElementById('tab-users').classList.toggle('hidden', tabId !== 'tab-users');
-    }
-
+    // --- LOGIC AUTH ---
     function toggleAuth() {
         isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
+        document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký Nhân Viên";
+        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Hoàn Tất Đăng Ký";
+        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký ngay" : "Đã có tài khoản? Đăng nhập ngay";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
         document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
+        document.getElementById('forgot-pw-box').classList.toggle('hidden', !isLoginMode);
     }
 
     async function handleAuth() {
@@ -143,105 +166,91 @@
         const pass = document.getElementById('password').value;
         const name = document.getElementById('fullName').value;
         const repass = document.getElementById('repassword').value;
-
         try {
             if (isLoginMode) {
                 await auth.signInWithEmailAndPassword(email, pass);
             } else {
-                if(pass !== repass) return alert("Mật khẩu không khớp!");
+                if(!name || pass !== repass) return alert("Kiểm tra thông tin!");
                 const res = await auth.createUserWithEmailAndPassword(email, pass);
                 await res.user.updateProfile({ displayName: name });
                 await db.collection("users").doc(res.user.uid).set({ ho_ten: name, email: email });
-                location.reload();
+                alert("Thành công!"); location.reload();
             }
-        } catch (e) { alert(e.message); }
+        } catch (e) { alert("Lỗi: " + e.message); }
     }
 
+    // --- ĐỔI MẬT KHẨU ---
+    async function changePassword() {
+        const user = auth.currentUser;
+        const oldP = document.getElementById('old-pass').value;
+        const newP = document.getElementById('new-pass').value;
+        const reP = document.getElementById('renew-pass').value;
+
+        if(!oldP || !newP || newP !== reP) return alert("Mật khẩu không khớp hoặc trống!");
+        
+        try {
+            const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldP);
+            await user.reauthenticateWithCredential(credential);
+            await user.updatePassword(newP);
+            alert("Đã đổi mật khẩu!");
+            switchTab('tab-cong');
+        } catch (e) { alert("Lỗi: Mật khẩu cũ không đúng!"); }
+    }
+
+    // --- ĐIỀU KHIỂN GIAO DIỆN ---
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
-            
             const isAdmin = ADMIN_LIST.includes(user.email);
-            if(isAdmin) {
-                document.getElementById('admin-menu').classList.remove('hidden');
-                loadUserList();
-            }
-            
-            // Render tiêu đề bảng dựa trên quyền
-            renderTableHeader(isAdmin);
-            initFilter(); 
-            loadData();
+            if(isAdmin) { document.getElementById('admin-menu').classList.remove('hidden'); loadUserList(); }
+            renderTableHeader(isAdmin); initFilter(); loadData();
         } else {
             document.getElementById('auth-section').classList.remove('hidden');
             document.getElementById('main-content').classList.add('hidden');
         }
     });
 
+    function switchTab(t) {
+        ['tab-cong', 'tab-users', 'tab-profile'].forEach(tab => document.getElementById(tab).classList.toggle('hidden', tab !== t));
+    }
+
     function renderTableHeader(isAdmin) {
-        let header = `<th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>TC</th>`;
-        if(isAdmin) {
-            header += `<th>Trạng thái</th><th>Thao tác</th>`;
-        } else {
-            header += `<th>Thao tác</th>`; // Thành viên chỉ thấy cột thao tác để Sửa/Xóa ca chưa duyệt
-        }
-        document.getElementById('table-header').innerHTML = header;
+        let h = `<th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>TC</th>`;
+        h += isAdmin ? `<th>Duyệt</th><th>Thao tác</th>` : `<th>Thao tác</th>`;
+        document.getElementById('table-header').innerHTML = h;
     }
 
     function loadData() {
         const user = auth.currentUser;
         const month = document.getElementById('filterMonth').value;
         const isAdmin = ADMIN_LIST.includes(user.email);
+        let q = db.collection("bang_luong").where("thang", "==", month);
+        if (!isAdmin) q = q.where("uid", "==", user.uid);
         
-        let query = db.collection("bang_luong").where("thang", "==", month);
-        if (!isAdmin) query = query.where("uid", "==", user.uid);
-
-        query.onSnapshot(snapshot => {
+        q.onSnapshot(snapshot => {
             let html = '';
             snapshot.forEach(doc => {
                 const d = doc.data();
                 const isApproved = d.status === 'approved';
-                
-                html += `<tr>
-                    <td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td>
-                    <td>${d.gio_lam}</td><td>${d.tang_ca}</td>`;
-                
+                html += `<tr><td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td>`;
                 if(isAdmin) {
-                    html += `<td style="color:${isApproved?'green':'orange'}">${isApproved?'Đã duyệt':'Chờ...'}</td>`;
-                    html += `<td>
+                    html += `<td style="color:${isApproved?'green':'orange'}">${isApproved?'✅':'⏳'}</td>
+                    <td><div class="btn-group">
                         ${!isApproved ? `<button class="btn-sm bg-success" onclick="approveData('${doc.id}')">Duyệt</button>` : ''}
                         <button class="btn-sm bg-warning" onclick="editData('${doc.id}', '${d.ngay}', '${d.gio_vao}', '${d.gio_ra}', ${d.giai_lao})">Sửa</button>
                         <button class="btn-sm bg-danger" onclick="deleteData('${doc.id}')">Xóa</button>
-                    </td>`;
+                    </div></td>`;
                 } else {
-                    // Đối với thành viên: Chỉ hiện nút Sửa/Xóa nếu CA CHƯA DUYỆT
-                    html += `<td>
-                        ${!isApproved ? `
-                            <button class="btn-sm bg-warning" onclick="editData('${doc.id}', '${d.ngay}', '${d.gio_vao}', '${d.gio_ra}', ${d.giai_lao})">Sửa</button>
-                            <button class="btn-sm bg-danger" onclick="deleteData('${doc.id}')">Xóa</button>
-                        ` : '🔒 Đã chốt'}
-                    </td>`;
+                    html += `<td><div class="btn-group">${!isApproved ? `<button class="btn-sm bg-warning" onclick="editData('${doc.id}', '${d.ngay}', '${d.gio_vao}', '${d.gio_ra}', ${d.giai_lao})">Sửa</button> <button class="btn-sm bg-danger" onclick="deleteData('${doc.id}')">Xóa</button>` : '🔒'}</div></td>`;
                 }
                 html += `</tr>`;
             });
-            document.getElementById('dataBody').innerHTML = html;
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="8">Trống</td></tr>';
         });
     }
 
-    // Các hàm phụ trợ khác (resetForm, initFilter, logout, approveData, v.v.)
-    function initFilter() {
-        const select = document.getElementById('filterMonth');
-        if(select.options.length > 0) return;
-        for(let i=1; i<=12; i++) {
-            let val = i < 10 ? '0'+i : i;
-            select.add(new Option("Tháng " + val, val, i == new Date().getMonth()+1, i == new Date().getMonth()+1));
-        }
-        document.getElementById('workDate').valueAsDate = new Date();
-    }
-    async function approveData(id) { await db.collection("bang_luong").doc(id).update({ status: 'approved' }); }
-    async function deleteData(id) { if(confirm("Xóa?")) await db.collection("bang_luong").doc(id).delete(); }
-    function logout() { auth.signOut(); }
     async function saveData() {
         const user = auth.currentUser;
         const id = document.getElementById('edit-id').value;
@@ -249,6 +258,7 @@
         const tIn = document.getElementById('timeIn').value;
         const tOut = document.getElementById('timeOut').value;
         const bMin = parseInt(document.getElementById('breakMin').value) || 0;
+        
         const start = new Date(`2026-01-01 ${tIn}`);
         const end = new Date(`2026-01-01 ${tOut}`);
         let diff = (end - start) / 3600000;
@@ -256,17 +266,18 @@
         let totalHrs = Math.max(0, diff - (bMin / 60));
         let basic = totalHrs > 8 ? 8 : totalHrs;
         let ot = totalHrs > 8 ? (totalHrs - 8) : 0;
+        
         const data = {
             uid: user.uid, ho_ten: user.displayName || user.email,
             ngay: date, gio_vao: tIn, gio_ra: tOut, giai_lao: bMin,
             gio_lam: basic.toFixed(2), tang_ca: ot.toFixed(2),
-            thanh_tien: Math.round((basic * 1177) + (ot * 1177 * 1.25)),
             thang: date.substring(5, 7), status: "pending"
         };
         if(id) await db.collection("bang_luong").doc(id).update(data);
         else await db.collection("bang_luong").add(data);
         resetForm();
     }
+
     function editData(id, date, tIn, tOut, bMin) {
         document.getElementById('edit-id').value = id;
         document.getElementById('workDate').value = date;
@@ -275,22 +286,53 @@
         document.getElementById('breakMin').value = bMin;
         document.getElementById('btn-save').innerText = "CẬP NHẬT";
         document.getElementById('btn-cancel').classList.remove('hidden');
+        window.scrollTo(0,0);
     }
+
     function resetForm() {
         document.getElementById('edit-id').value = "";
         document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
         document.getElementById('btn-cancel').classList.add('hidden');
     }
+
+    async function approveData(id) { await db.collection("bang_luong").doc(id).update({ status: 'approved' }); }
+    async function deleteData(id) { if(confirm("Xóa?")) await db.collection("bang_luong").doc(id).delete(); }
+    async function forgotPassword() {
+        const e = document.getElementById('email').value;
+        if(!e) return alert("Nhập Email!");
+        await auth.sendPasswordResetEmail(e); alert("Đã gửi link vào mail!");
+    }
+    function logout() { auth.signOut(); location.reload(); }
+    
+    function initFilter() {
+        const s = document.getElementById('filterMonth');
+        if(s.options.length > 0) return;
+        for(let i=1; i<=12; i++) {
+            let v = i < 10 ? '0'+i : i;
+            s.add(new Option("Tháng " + v, v, i == new Date().getMonth()+1, i == new Date().getMonth()+1));
+        }
+        document.getElementById('workDate').valueAsDate = new Date();
+    }
+
     function loadUserList() {
         db.collection("users").onSnapshot(snapshot => {
             let html = '';
             snapshot.forEach(doc => {
                 const u = doc.data();
-                html += `<tr><td>${u.ho_ten}</td><td>${u.email}</td><td><button class="btn-sm bg-danger" onclick="deleteUser('${doc.id}')">Xóa</button></td></tr>`;
+                html += `<tr><td>${u.ho_ten}</td><td>${u.email}</td>
+                    <td><div class="btn-group">
+                        <button class="btn-sm bg-warning" onclick="editUserName('${doc.id}', '${u.ho_ten}')">Sửa</button>
+                        <button class="btn-sm bg-danger" onclick="deleteUserRecord('${doc.id}')">Xóa</button>
+                    </div></td></tr>`;
             });
             document.getElementById('userListBody').innerHTML = html;
         });
     }
+    async function editUserName(id, o) {
+        const n = prompt("Tên mới:", o);
+        if(n) await db.collection("users").doc(id).update({ ho_ten: n });
+    }
+    async function deleteUserRecord(id) { if(confirm("Xóa nhân viên?")) await db.collection("users").doc(id).delete(); }
 </script>
 </body>
 </html>
