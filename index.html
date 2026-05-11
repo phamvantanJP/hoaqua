@@ -35,23 +35,31 @@
 <div class="container">
     <div id="auth-section" class="card" style="max-width:400px; margin:50px auto;">
         <h2 id="auth-title" style="text-align:center">Đăng Nhập</h2>
+        
         <div id="reg-fields" class="hidden">
             <label>Họ và Tên</label>
             <input type="text" id="fullName" placeholder="Nhập họ tên đầy đủ">
         </div>
+
         <label>Email</label>
         <input type="email" id="email" placeholder="email@gmail.com">
+        
         <label>Mật khẩu</label>
         <input type="password" id="password" placeholder="••••••">
+        
         <div id="retype-reg-fields" class="hidden">
             <label>Nhập lại mật khẩu</label>
             <input type="password" id="repassword" placeholder="••••••">
         </div>
+
         <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
-        <p id="forgot-pw-text" style="text-align:right; margin-top:10px;">
+        
+        <p id="forgot-pw-box" style="text-align:right; margin-top:10px;">
             <a href="#" onclick="forgotPassword()" style="font-size:13px; color: #666; text-decoration:none;">Quên mật khẩu?</a>
         </p>
-        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:14px; margin-top:15px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
+
+        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:14px; margin-top:15px;" 
+           onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
     </div>
 
     <div id="main-content" class="hidden">
@@ -74,7 +82,7 @@
                 <input type="hidden" id="edit-id">
                 <div class="grid-inputs">
                     <div><label>Ngày</label><input type="date" id="workDate"></div>
-                    <div><label>Giải lao</label><input type="number" id="breakMin" value="45"></div>
+                    <div><label>Giải lao (phút)</label><input type="number" id="breakMin" value="45"></div>
                     <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00"></div>
                     <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00"></div>
                 </div>
@@ -83,7 +91,7 @@
             </div>
 
             <div class="card">
-                <select id="filterMonth" style="width:120px; margin-bottom:10px;" onchange="loadData()"></select>
+                <select id="filterMonth" style="width:150px; margin-bottom:10px;" onchange="loadData()"></select>
                 <div class="table-wrapper">
                     <table>
                         <thead><tr id="table-header"></tr></thead>
@@ -96,7 +104,6 @@
         <div id="tab-users" class="hidden">
             <div class="card">
                 <h3 style="color:var(--dark)">Danh sách Nhân viên & Tài khoản</h3>
-                <p style="font-size:13px; color:gray;">* Admin có thể sửa tên hiển thị hoặc gửi link Reset mật khẩu cho nhân viên.</p>
                 <div class="table-wrapper">
                     <table>
                         <thead>
@@ -115,6 +122,7 @@
 </div>
 
 <script>
+    // Cấu hình Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyDzp1rjYmoxb8iFfMd0mcwgqeVimP4LXkw",
         authDomain: "quanlyluong2026.firebaseapp.com",
@@ -130,14 +138,18 @@
     const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     let isLoginMode = true;
 
-    // --- XỬ LÝ ĐĂNG NHẬP / ĐĂNG KÝ ---
+    // --- CHỨC NĂNG ĐĂNG NHẬP / ĐĂNG KÝ ---
     function toggleAuth() {
         isLoginMode = !isLoginMode;
-        document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký Tài Khoản";
+        document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký Nhân Viên";
+        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Hoàn Tất Đăng Ký";
+        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký ngay" : "Đã có tài khoản? Đăng nhập ngay";
+        
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
         document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
-        document.getElementById('forgot-pw-text').classList.toggle('hidden', !isLoginMode);
-        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Hoàn Tất Đăng Ký";
+        
+        // Hiện Quên mật khẩu khi Đăng nhập, Ẩn khi Đăng ký
+        document.getElementById('forgot-pw-box').classList.toggle('hidden', !isLoginMode);
     }
 
     async function handleAuth() {
@@ -149,13 +161,12 @@
         try {
             if (isLoginMode) {
                 const res = await auth.signInWithEmailAndPassword(email, pass);
-                // TỰ ĐỘNG CẬP NHẬT NHÂN VIÊN VÀO DANH SÁCH NẾU CHƯA CÓ
                 await db.collection("users").doc(res.user.uid).set({
                     ho_ten: res.user.displayName || res.user.email,
                     email: res.user.email
                 }, { merge: true });
             } else {
-                if(!name || pass !== repass) return alert("Kiểm tra lại thông tin và mật khẩu!");
+                if(!name || pass !== repass) return alert("Vui lòng kiểm tra lại họ tên và mật khẩu khớp nhau!");
                 const res = await auth.createUserWithEmailAndPassword(email, pass);
                 await res.user.updateProfile({ displayName: name });
                 await db.collection("users").doc(res.user.uid).set({
@@ -169,7 +180,7 @@
         } catch (e) { alert("Lỗi: " + e.message); }
     }
 
-    // --- QUẢN LÝ NHÂN VIÊN (CHO ADMIN) ---
+    // --- QUẢN LÝ NHÂN SỰ (ADMIN) ---
     function loadUserList() {
         db.collection("users").onSnapshot(snapshot => {
             let html = '';
@@ -190,7 +201,7 @@
     }
 
     async function adminResetPW(email) {
-        if(confirm("Gửi email yêu cầu đặt lại mật khẩu cho: " + email + "?")) {
+        if(confirm("Gửi email đặt lại mật khẩu cho: " + email + "?")) {
             await auth.sendPasswordResetEmail(email);
             alert("Đã gửi link Reset mật khẩu thành công!");
         }
@@ -202,12 +213,12 @@
     }
 
     async function deleteUserRecord(id) {
-        if(confirm("Xóa nhân viên này khỏi danh sách quản lý?")) {
+        if(confirm("Xóa nhân viên khỏi danh sách hiển thị? (Lưu ý: Bạn vẫn cần xóa thủ công trong Firebase Console Authentication)")) {
             await db.collection("users").doc(id).delete();
         }
     }
 
-    // --- CÁC HÀM CÔNG VIỆC ---
+    // --- QUẢN LÝ CÔNG ---
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('auth-section').classList.add('hidden');
@@ -257,7 +268,7 @@
                 }
                 html += `</tr>`;
             });
-            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Chưa có dữ liệu</td></tr>';
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="8">Chưa có dữ liệu</td></tr>';
         });
     }
 
@@ -268,20 +279,23 @@
         const tIn = document.getElementById('timeIn').value;
         const tOut = document.getElementById('timeOut').value;
         const bMin = parseInt(document.getElementById('breakMin').value) || 0;
+        
         const start = new Date(`2026-01-01 ${tIn}`);
         const end = new Date(`2026-01-01 ${tOut}`);
         let diff = (end - start) / 3600000;
         if (diff < 0) diff += 24;
+        
         let totalHrs = Math.max(0, diff - (bMin / 60));
         let basic = totalHrs > 8 ? 8 : totalHrs;
         let ot = totalHrs > 8 ? (totalHrs - 8) : 0;
+        
         const data = {
             uid: user.uid, ho_ten: user.displayName || user.email,
             ngay: date, gio_vao: tIn, gio_ra: tOut, giai_lao: bMin,
             gio_lam: basic.toFixed(2), tang_ca: ot.toFixed(2),
-            thanh_tien: Math.round((basic * 1177) + (ot * 1177 * 1.25)),
             thang: date.substring(5, 7), status: "pending"
         };
+        
         if(id) await db.collection("bang_luong").doc(id).update(data);
         else await db.collection("bang_luong").add(data);
         resetForm();
@@ -305,23 +319,26 @@
 
     async function approveData(id) { await db.collection("bang_luong").doc(id).update({ status: 'approved' }); }
     async function deleteData(id) { if(confirm("Xóa bản ghi này?")) await db.collection("bang_luong").doc(id).delete(); }
+    
     async function forgotPassword() {
         const e = document.getElementById('email').value;
-        if(!e) return alert("Nhập email trước!");
+        if(!e) return alert("Vui lòng nhập Email trước khi bấm Quên mật khẩu!");
         await auth.sendPasswordResetEmail(e);
-        alert("Đã gửi link reset mật khẩu vào mail!");
+        alert("Đã gửi link reset mật khẩu vào email của bạn!");
     }
+    
     function logout() { auth.signOut(); }
     function switchTab(t) {
         document.getElementById('tab-cong').classList.toggle('hidden', t !== 'tab-cong');
         document.getElementById('tab-users').classList.toggle('hidden', t !== 'tab-users');
     }
+    
     function initFilter() {
         const s = document.getElementById('filterMonth');
         if(s.options.length > 0) return;
         for(let i=1; i<=12; i++) {
             let v = i < 10 ? '0'+i : i;
-            s.add(new Option("Tháng " + v, v, i == new Date().getMonth()+1, i == new Date().getMonth()+1));
+            s.add(new Option("Dữ liệu tháng " + v, v, i == new Date().getMonth()+1, i == new Date().getMonth()+1));
         }
         document.getElementById('workDate').valueAsDate = new Date();
     }
