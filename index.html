@@ -29,6 +29,9 @@
         .preview-salary { background: #fff3cd; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; border: 1px dashed #856404; }
         #pw-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:1000; }
         .modal-content { background:white; padding:20px; border-radius:12px; width:90%; max-width:320px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        
+        /* Style cho ô lương bị khóa */
+        .input-locked { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -56,15 +59,20 @@
         </div>
 
         <div class="card">
+            <!-- LƯƠNG CƠ BẢN LÊN ĐẦU -->
+            <label>Lương cơ bản (Yên/giờ)</label>
+            <div style="display:flex; gap:5px; align-items:center">
+                <input type="number" id="baseRateInput" value="1177" readonly class="input-locked" oninput="calculatePreview()">
+                <button id="btn-rate-toggle" onclick="toggleRateLock()" class="bg-info" style="white-space:nowrap; width:100px">Thay đổi</button>
+            </div>
+
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+            
             <h3>Nhập Công</h3>
             <input type="hidden" id="edit-id">
             <label>Ngày làm việc</label>
             <input type="date" id="workDate" onchange="syncFilterWithDate()">
             
-            <!-- Ô NHẬP LƯƠNG HỆ SỐ -->
-            <label>Lương cơ bản (Yên/giờ)</label>
-            <input type="number" id="baseRateInput" value="1177" oninput="calculatePreview()">
-
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
                 <div><label>Vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
                 <div><label>Ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
@@ -118,6 +126,24 @@
     const auth = firebase.auth();
     let isLoginMode = true;
 
+    // Logic khóa/mở khóa lương
+    function toggleRateLock() {
+        const input = document.getElementById('baseRateInput');
+        const btn = document.getElementById('btn-rate-toggle');
+        if (input.readOnly) {
+            input.readOnly = false;
+            input.classList.remove('input-locked');
+            btn.innerText = "Xác nhận";
+            btn.classList.replace('bg-info', 'bg-success');
+        } else {
+            input.readOnly = true;
+            input.classList.add('input-locked');
+            btn.innerText = "Thay đổi";
+            btn.classList.replace('bg-success', 'bg-info');
+            calculatePreview();
+        }
+    }
+
     function toggleAuth() {
         isLoginMode = !isLoginMode;
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
@@ -169,16 +195,13 @@
         }
     }
 
-    // TÍNH TOÁN DỰA TRÊN Ô NHẬP LƯƠNG
     function getCalc() {
         const d = document.getElementById('workDate').value || "2026-05-14";
         const rate = parseInt(document.getElementById('baseRateInput').value) || 1177;
         const rateOT = Math.round(rate * 1.25);
-        
         const t1 = new Date(`${d}T${document.getElementById('timeIn').value}`);
         let t2 = new Date(`${d}T${document.getElementById('timeOut').value}`);
         if(t2 <= t1) t2.setDate(t2.getDate() + 1);
-        
         let total = (t2 - t1)/3600000 - (document.getElementById('breakMin').value/60);
         total = Math.max(0, total);
         let b = Math.min(8, total), ot = Math.max(0, total - 8);
@@ -209,7 +232,7 @@
             uid: u.uid, ho_ten: u.displayName || u.email, ngay: d,
             gio_vao: document.getElementById('timeIn').value, gio_ra: document.getElementById('timeOut').value,
             giai_lao: document.getElementById('breakMin').value, 
-            he_so_luong: res.currentRate, // LƯU LẠI HỆ SỐ LÚC NHẬP
+            he_so_luong: res.currentRate,
             gio_lam: res.b, tang_ca: res.ot,
             thanh_tien: res.m, thang_nam: d.substring(0, 7)
         };
@@ -253,7 +276,7 @@
         document.getElementById('timeIn').value = t1; 
         document.getElementById('timeOut').value = t2;
         document.getElementById('breakMin').value = b; 
-        document.getElementById('baseRateInput').value = rate; // Đổ hệ số lương cũ vào để sửa
+        document.getElementById('baseRateInput').value = rate; 
         document.getElementById('btn-save').innerText = "CẬP NHẬT";
         document.getElementById('btn-cancel').classList.remove('hidden'); 
         window.scrollTo(0,0);
@@ -264,7 +287,6 @@
         document.getElementById('edit-id').value = ""; 
         document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
         document.getElementById('btn-cancel').classList.add('hidden');
-        document.getElementById('baseRateInput').value = 1177; // Reset về mặc định
     }
 
     function initFilter() {
