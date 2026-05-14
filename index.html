@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
@@ -27,10 +27,6 @@
         th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
         th { background: #f4f4f4; }
         .preview-salary { background: #fff3cd; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; border: 1px dashed #856404; }
-        
-        /* Modal Style cho đổi mật khẩu */
-        #pw-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000; }
-        .modal-content { background:white; padding:20px; border-radius:12px; width:90%; max-width:320px; }
     </style>
 </head>
 <body>
@@ -51,7 +47,7 @@
         <div class="card" style="display:flex; justify-content:space-between; align-items:center">
             <span>Chào: <b id="user-name"></b></span>
             <div>
-                <button onclick="openPwModal()" class="bg-info btn-sm">Đổi mật khẩu</button>
+                <button onclick="changePassword()" class="bg-info btn-sm">Đổi mật khẩu</button>
                 <button onclick="logout()" class="bg-danger btn-sm">Thoát</button>
             </div>
         </div>
@@ -87,18 +83,6 @@
     </div>
 </div>
 
-<!-- MODAL ĐỔI MẬT KHẨU -->
-<div id="pw-modal" class="hidden">
-    <div class="modal-content">
-        <h3 style="margin-top:0">Đổi Mật Khẩu</h3>
-        <label>Mật khẩu cũ</label><input type="password" id="oldPass">
-        <label>Mật khẩu mới</label><input type="password" id="newPass">
-        <label>Xác nhận mật khẩu mới</label><input type="password" id="confirmPass">
-        <button class="btn-main" onclick="submitChangePassword()">CẬP NHẬT</button>
-        <button onclick="closePwModal()" style="width:100%; margin-top:5px; background:#ccc">Đóng</button>
-    </div>
-</div>
-
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyDzp1rjYmoxb8iFfMd0mcwgqeVimP4LXkw",
@@ -120,6 +104,8 @@
         isLoginMode = !isLoginMode;
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
+        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
+        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký" : "Đã có tài khoản? Đăng nhập";
     }
 
     async function handleAuth() {
@@ -137,34 +123,17 @@
 
     function logout() { auth.signOut(); location.reload(); }
 
-    // --- LOGIC ĐỔI MẬT KHẨU MỚI ---
-    function openPwModal() { document.getElementById('pw-modal').classList.remove('hidden'); }
-    function closePwModal() { document.getElementById('pw-modal').classList.add('hidden'); }
-
-    async function submitChangePassword() {
-        const user = auth.currentUser;
-        const oldP = document.getElementById('oldPass').value;
-        const newP = document.getElementById('newPass').value;
-        const confP = document.getElementById('confirmPass').value;
-
-        if(!oldP || !newP || !confP) return alert("Vui lòng nhập đầy đủ thông tin!");
-        if(newP !== confP) return alert("Xác nhận mật khẩu mới không khớp!");
-        if(newP.length < 6) return alert("Mật khẩu mới phải từ 6 ký tự!");
-
-        try {
-            // Bước 1: Xác thực lại bằng mật khẩu cũ (giải quyết lỗi auth/requires-recent-login)
-            const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldP);
-            await user.reauthenticateWithCredential(credential);
-            
-            // Bước 2: Cập nhật mật khẩu mới
-            await user.updatePassword(newP);
-            alert("Đổi mật khẩu thành công!");
-            closePwModal();
-        } catch (err) {
-            alert("Lỗi: " + err.message);
+    async function changePassword() {
+        const newPass = prompt("Nhập mật khẩu mới:");
+        if (newPass && newPass.length >= 6) {
+            try {
+                await auth.currentUser.updatePassword(newPass);
+                alert("Đổi mật khẩu thành công!");
+            } catch (err) { alert("Lỗi: " + err.message); }
+        } else if (newPass) {
+            alert("Mật khẩu phải ít nhất 6 ký tự!");
         }
     }
-    // ------------------------------
 
     function syncFilterWithDate() {
         const date = document.getElementById('workDate').value;
@@ -218,13 +187,13 @@
         try {
             if(id) await db.collection("bang_luong").doc(id).update(data);
             else await db.collection("bang_luong").add(data);
-            alert("Đã lưu vào " + ym);
+            alert("Đã lưu dữ liệu!");
             resetForm();
         } catch(e) { alert(e.message); }
     }
 
     async function deleteData(id) {
-        if(confirm("Bạn có chắc muốn xóa bản ghi này?")) {
+        if(confirm("Bạn có chắc chắn muốn xóa dòng này?")) {
             try {
                 await db.collection("bang_luong").doc(id).delete();
             } catch(e) { alert(e.message); }
@@ -252,26 +221,31 @@
                     <td>${d.tang_ca}</td>
                     <td>${d.thanh_tien.toLocaleString()}</td>
                     <td>
-                        <button class="bg-warning" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
-                        <button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button>
+                        <button class="bg-warning" style="padding:4px 8px; margin-bottom:2px" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
+                        <button class="bg-danger" style="padding:4px 8px" onclick="deleteData('${d.id}')">Xóa</button>
                     </td>
                 </tr>`;
             });
             document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
-            document.getElementById('dataFooter').innerHTML = `<tr><td colspan="3">TỔNG</td><td>${sH.toFixed(2)}h</td><td>${sO.toFixed(2)}h</td><td colspan="2" style="color:red">${sM.toLocaleString()} ¥</td></tr>`;
+            document.getElementById('dataFooter').innerHTML = `<tr><td colspan="3">TỔNG</td><td>${sH.toFixed(2)}h</td><td>${sO.toFixed(2)}h</td><td colspan="2" style="color:red; font-weight:bold">${sM.toLocaleString()} ¥</td></tr>`;
         });
     }
 
     function editData(id, d, t1, t2, b) {
-        document.getElementById('edit-id').value = id; document.getElementById('workDate').value = d;
-        document.getElementById('timeIn').value = t1; document.getElementById('timeOut').value = t2;
-        document.getElementById('breakMin').value = b; document.getElementById('btn-save').innerText = "CẬP NHẬT";
-        document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0);
+        document.getElementById('edit-id').value = id; 
+        document.getElementById('workDate').value = d;
+        document.getElementById('timeIn').value = t1; 
+        document.getElementById('timeOut').value = t2;
+        document.getElementById('breakMin').value = b; 
+        document.getElementById('btn-save').innerText = "CẬP NHẬT";
+        document.getElementById('btn-cancel').classList.remove('hidden'); 
+        window.scrollTo(0,0);
         calculatePreview();
     }
 
     function resetForm() {
-        document.getElementById('edit-id').value = ""; document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
         document.getElementById('btn-cancel').classList.add('hidden');
     }
 
