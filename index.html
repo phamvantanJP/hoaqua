@@ -34,7 +34,7 @@
 <div class="container">
     <!-- LOGIN -->
     <div id="auth-section" class="card" style="max-width:350px; margin:50px auto;">
-        <h2 style="text-align:center">Đăng Nhập 2026</h2>
+        <h2 id="auth-title" style="text-align:center">Đăng Nhập 2026</h2>
         <div id="reg-fields" class="hidden"><label>Họ Tên</label><input type="text" id="fullName"></div>
         <label>Email</label><input type="email" id="email">
         <label>Mật khẩu</label><input type="password" id="password">
@@ -47,7 +47,7 @@
         <div class="card" style="display:flex; justify-content:space-between; align-items:center">
             <span>Chào: <b id="user-name"></b></span>
             <div>
-                <button onclick="changePassword()" class="bg-info btn-sm">Đổi Pass</button>
+                <button onclick="changePassword()" class="bg-info btn-sm">Đổi mật khẩu</button>
                 <button onclick="logout()" class="bg-danger btn-sm">Thoát</button>
             </div>
         </div>
@@ -104,6 +104,8 @@
         isLoginMode = !isLoginMode;
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
+        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
+        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký" : "Đã có tài khoản? Đăng nhập";
     }
 
     async function handleAuth() {
@@ -121,7 +123,18 @@
 
     function logout() { auth.signOut(); location.reload(); }
 
-    // Tự động nhảy bộ lọc theo ngày được chọn
+    async function changePassword() {
+        const newPass = prompt("Nhập mật khẩu mới:");
+        if (newPass && newPass.length >= 6) {
+            try {
+                await auth.currentUser.updatePassword(newPass);
+                alert("Đổi mật khẩu thành công!");
+            } catch (err) { alert("Lỗi: " + err.message); }
+        } else if (newPass) {
+            alert("Mật khẩu phải ít nhất 6 ký tự!");
+        }
+    }
+
     function syncFilterWithDate() {
         const date = document.getElementById('workDate').value;
         if(date) {
@@ -155,8 +168,7 @@
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
             initFilter();
-            // Đặt ngày mặc định là hôm nay theo giờ Nhật Bản (2026-05-14)
-            const today = new Date().toLocaleDateString('en-CA'); // Trả về yyyy-mm-dd
+            const today = new Date().toLocaleDateString('en-CA');
             document.getElementById('workDate').value = today;
             syncFilterWithDate();
         }
@@ -175,15 +187,23 @@
         try {
             if(id) await db.collection("bang_luong").doc(id).update(data);
             else await db.collection("bang_luong").add(data);
-            alert("Đã lưu vào " + ym);
+            alert("Đã lưu dữ liệu!");
             resetForm();
         } catch(e) { alert(e.message); }
+    }
+
+    async function deleteData(id) {
+        if(confirm("Bạn có chắc chắn muốn xóa dòng này?")) {
+            try {
+                await db.collection("bang_luong").doc(id).delete();
+            } catch(e) { alert(e.message); }
+        }
     }
 
     function loadData() {
         const val = document.getElementById('filterMonthYear').value;
         const u = auth.currentUser;
-        if(!val) return;
+        if(!val || !u) return;
         let q = db.collection("bang_luong").where("thang_nam", "==", val);
         if(u.email !== "phamvantan@gmail.com") q = q.where("uid", "==", u.uid);
 
@@ -193,31 +213,45 @@
             docs.sort((a,b) => a.ngay.localeCompare(b.ngay));
             docs.forEach(d => {
                 sH += parseFloat(d.gio_lam); sO += parseFloat(d.tang_ca); sM += parseInt(d.thanh_tien);
-                html += `<tr><td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()}</td>
-                <td><button class="bg-warning" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button></td></tr>`;
+                html += `<tr>
+                    <td>${d.ngay}</td>
+                    <td>${d.ho_ten}</td>
+                    <td>${d.gio_vao}-${d.gio_ra}</td>
+                    <td>${d.gio_lam}</td>
+                    <td>${d.tang_ca}</td>
+                    <td>${d.thanh_tien.toLocaleString()}</td>
+                    <td>
+                        <button class="bg-warning" style="padding:4px 8px; margin-bottom:2px" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
+                        <button class="bg-danger" style="padding:4px 8px" onclick="deleteData('${d.id}')">Xóa</button>
+                    </td>
+                </tr>`;
             });
             document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
-            document.getElementById('dataFooter').innerHTML = `<tr><td colspan="3">TỔNG</td><td>${sH.toFixed(2)}h</td><td>${sO.toFixed(2)}h</td><td colspan="2" style="color:red">${sM.toLocaleString()} ¥</td></tr>`;
+            document.getElementById('dataFooter').innerHTML = `<tr><td colspan="3">TỔNG</td><td>${sH.toFixed(2)}h</td><td>${sO.toFixed(2)}h</td><td colspan="2" style="color:red; font-weight:bold">${sM.toLocaleString()} ¥</td></tr>`;
         });
     }
 
     function editData(id, d, t1, t2, b) {
-        document.getElementById('edit-id').value = id; document.getElementById('workDate').value = d;
-        document.getElementById('timeIn').value = t1; document.getElementById('timeOut').value = t2;
-        document.getElementById('breakMin').value = b; document.getElementById('btn-save').innerText = "CẬP NHẬT";
-        document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0);
+        document.getElementById('edit-id').value = id; 
+        document.getElementById('workDate').value = d;
+        document.getElementById('timeIn').value = t1; 
+        document.getElementById('timeOut').value = t2;
+        document.getElementById('breakMin').value = b; 
+        document.getElementById('btn-save').innerText = "CẬP NHẬT";
+        document.getElementById('btn-cancel').classList.remove('hidden'); 
+        window.scrollTo(0,0);
+        calculatePreview();
     }
 
     function resetForm() {
-        document.getElementById('edit-id').value = ""; document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
         document.getElementById('btn-cancel').classList.add('hidden');
     }
 
     function initFilter() {
         const s = document.getElementById('filterMonthYear');
         if(s.options.length > 0) return;
-        const now = new Date();
-        // Tạo danh sách tháng từ năm 2025 đến hết 2026
         for(let y = 2025; y <= 2026; y++) {
             for(let m = 1; m <= 12; m++) {
                 let mm = m.toString().padStart(2, '0');
