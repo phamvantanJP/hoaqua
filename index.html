@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Công & Lương 2026+</title>
+    <title>Quản Lý Lương 2026 (Fixed)</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -11,77 +11,70 @@
     <style>
         :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --info: #17a2b8; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 8px; }
-        .container { max-width: 1100px; margin: auto; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid #e1e4e8; }
+        .container { max-width: 1000px; margin: auto; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
         input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; transition: 0.2s; }
-        button:active { transform: scale(0.98); }
-        .btn-main { background: var(--primary); color: white; width: 100%; padding: 12px; margin-top: 8px; text-transform: uppercase; }
-        .btn-group { display: flex; gap: 4px; }
-        .btn-sm { padding: 6px 10px; color: white; flex: 1; }
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; padding: 10px; }
+        .btn-main { background: var(--primary); color: white; width: 100%; text-transform: uppercase; margin-top: 10px; }
+        .btn-sm { color: white; padding: 6px 12px; }
         .bg-success { background: var(--success); }
         .bg-danger { background: var(--danger); }
         .bg-warning { background: var(--warning); color: black; }
         .bg-info { background: var(--info); }
         .hidden { display: none; }
-        .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; min-width: 850px; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; font-size: 13px; }
-        th { background: #f8f9fa; }
-        .summary-row { background: #e9ecef; font-weight: bold; }
-        .preview-salary { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center; font-weight: bold; color: #856404; border: 1px dashed #856404; }
+        .table-wrapper { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; min-width: 700px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #f4f4f4; }
+        .preview-salary { background: #fff3cd; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 10px; border: 1px dashed #856404; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- AUTH SECTION -->
-    <div id="auth-section" class="card" style="max-width:380px; margin:40px auto;">
-        <h2 id="auth-title" style="text-align:center;">Hệ Thống Lương</h2>
-        <div id="reg-fields" class="hidden"><label>Họ và Tên</label><input type="text" id="fullName" placeholder="Nhập tên"></div>
-        <label>Email</label><input type="email" id="email" placeholder="example@gmail.com">
-        <label>Mật khẩu</label><input type="password" id="password" placeholder="••••••">
-        <div id="retype-reg-fields" class="hidden"><label>Nhập lại mật khẩu</label><input type="password" id="repassword" placeholder="••••••"></div>
-        <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
-        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px; margin-top:15px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký</p>
+    <!-- LOGIN -->
+    <div id="auth-section" class="card" style="max-width:350px; margin:50px auto;">
+        <h2 style="text-align:center">Đăng Nhập 2026</h2>
+        <div id="reg-fields" class="hidden"><label>Họ Tên</label><input type="text" id="fullName"></div>
+        <label>Email</label><input type="email" id="email">
+        <label>Mật khẩu</label><input type="password" id="password">
+        <button class="btn-main" onclick="handleAuth()" id="btn-auth">Đăng Nhập</button>
+        <p onclick="toggleAuth()" id="toggle-text" style="text-align:center; color:blue; cursor:pointer; font-size:12px; margin-top:10px">Chưa có tài khoản? Đăng ký</p>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN -->
     <div id="main-content" class="hidden">
-        <div class="card" style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
-            <div>Chào: <b id="user-name" style="color: var(--primary);"></b></div>
-            <div style="display: flex; gap: 5px;">
-                <button onclick="changePassword()" class="btn-sm bg-info">Đổi mật khẩu</button>
-                <button onclick="logout()" class="btn-sm bg-danger">Thoát</button>
+        <div class="card" style="display:flex; justify-content:space-between; align-items:center">
+            <span>Chào: <b id="user-name"></b></span>
+            <div>
+                <button onclick="changePassword()" class="bg-info btn-sm">Đổi Pass</button>
+                <button onclick="logout()" class="bg-danger btn-sm">Thoát</button>
             </div>
         </div>
 
         <div class="card">
-            <h3 style="margin-top:0;">Nhập Công</h3>
+            <h3>Nhập Công</h3>
             <input type="hidden" id="edit-id">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div style="grid-column: span 2;">
-                    <label>Ngày làm việc</label>
-                    <input type="date" id="workDate" onchange="calculatePreview()">
-                </div>
-                <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
-                <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
+            <label>Ngày làm việc</label>
+            <input type="date" id="workDate" onchange="syncFilterWithDate()">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+                <div><label>Vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
+                <div><label>Ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
                 <div><label>Giải lao (phút)</label><input type="number" id="breakMin" value="45" oninput="calculatePreview()"></div>
             </div>
             <div id="salary-preview" class="preview-salary">Dự tính: 0 ¥</div>
             <button class="btn-main" onclick="saveData()" id="btn-save">LƯU DỮ LIỆU</button>
-            <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:5px; background:#6c757d; color:white; padding:10px">HỦY BỎ</button>
+            <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:5px">Hủy</button>
         </div>
 
         <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom:10px; align-items: center;">
-                <label style="font-weight: bold; font-size: 14px;">Xem dữ liệu:</label>
-                <select id="filterMonthYear" style="width:160px; margin:0;" onchange="loadData()"></select>
-                <button class="btn-sm bg-success" onclick="exportExcel()" style="max-width: 100px; margin-left: 5px;">📥 EXCEL</button>
+            <div style="display:flex; justify-content:space-between; align-items:center">
+                <select id="filterMonthYear" style="width:180px" onchange="loadData()"></select>
+                <button onclick="exportExcel()" class="bg-success btn-sm">XUẤT EXCEL</button>
             </div>
             <div class="table-wrapper">
                 <table id="table-to-export">
-                    <thead><tr><th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>OT</th><th>Tiền Yên</th><th>Sửa/Xóa</th></tr></thead>
+                    <thead><tr><th>Ngày</th><th>Tên</th><th>Giờ</th><th>Công</th><th>OT</th><th>Tiền</th><th>Lệnh</th></tr></thead>
                     <tbody id="dataBody"></tbody>
                     <tfoot id="dataFooter"></tfoot>
                 </table>
@@ -105,151 +98,136 @@
     const auth = firebase.auth();
     const RATE_BASE = 1177; 
     const RATE_OT = Math.round(1177 * 1.25);
-    const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     let isLoginMode = true;
 
     function toggleAuth() {
         isLoginMode = !isLoginMode;
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
-        document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
-        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký" : "Đã có tài khoản? Đăng nhập";
     }
 
     async function handleAuth() {
-        const email = document.getElementById('email').value;
-        const pass = document.getElementById('password').value;
+        const e = document.getElementById('email').value, p = document.getElementById('password').value;
         try {
-            if (isLoginMode) { await auth.signInWithEmailAndPassword(email, pass); } 
+            if(isLoginMode) await auth.signInWithEmailAndPassword(e, p);
             else {
-                const name = document.getElementById('fullName').value;
-                if(!name || pass !== document.getElementById('repassword').value) return alert("Kiểm tra lại thông tin!");
-                const res = await auth.createUserWithEmailAndPassword(email, pass);
-                await res.user.updateProfile({ displayName: name });
-                location.reload();
+                const n = document.getElementById('fullName').value;
+                const res = await auth.createUserWithEmailAndPassword(e, p);
+                await res.user.updateProfile({ displayName: n });
             }
-        } catch (e) { alert("Lỗi: " + e.message); }
-    }
-
-    async function changePassword() {
-        const newPass = prompt("Nhập mật khẩu mới (ít nhất 6 ký tự):");
-        if (newPass && newPass.length >= 6) {
-            try {
-                await auth.currentUser.updatePassword(newPass);
-                alert("Đã đổi mật khẩu thành công!");
-            } catch (e) { alert("Lỗi bảo mật: Bạn cần thoát ra đăng nhập lại mới có thể đổi mật khẩu."); }
-        }
+            location.reload();
+        } catch(err) { alert(err.message); }
     }
 
     function logout() { auth.signOut(); location.reload(); }
 
+    // Tự động nhảy bộ lọc theo ngày được chọn
+    function syncFilterWithDate() {
+        const date = document.getElementById('workDate').value;
+        if(date) {
+            const ym = date.substring(0, 7);
+            const filter = document.getElementById('filterMonthYear');
+            filter.value = ym;
+            loadData();
+            calculatePreview();
+        }
+    }
+
     function getCalc() {
-        const dateVal = document.getElementById('workDate').value || "2026-05-14";
-        const start = new Date(`${dateVal}T${document.getElementById('timeIn').value}`);
-        let end = new Date(`${dateVal}T${document.getElementById('timeOut').value}`);
-        if (end <= start) end.setDate(end.getDate() + 1);
-        let total = (end - start) / 3600000 - (parseInt(document.getElementById('breakMin').value) / 60);
+        const d = document.getElementById('workDate').value || "2026-05-14";
+        const t1 = new Date(`${d}T${document.getElementById('timeIn').value}`);
+        let t2 = new Date(`${d}T${document.getElementById('timeOut').value}`);
+        if(t2 <= t1) t2.setDate(t2.getDate() + 1);
+        let total = (t2 - t1)/3600000 - (document.getElementById('breakMin').value/60);
         total = Math.max(0, total);
-        let basic = Math.min(8, total), ot = Math.max(0, total - 8);
-        return { basic: basic.toFixed(2), ot: ot.toFixed(2), money: Math.round(basic*RATE_BASE + ot*RATE_OT) };
+        let b = Math.min(8, total), ot = Math.max(0, total - 8);
+        return { b: b.toFixed(2), ot: ot.toFixed(2), m: Math.round(b*RATE_BASE + ot*RATE_OT) };
     }
 
     function calculatePreview() {
         const res = getCalc();
-        document.getElementById('salary-preview').innerText = `Dự tính: ${res.basic}h + ${res.ot}h OT = ${res.money.toLocaleString()} ¥`;
+        document.getElementById('salary-preview').innerText = `${res.b}h + ${res.ot}h OT = ${res.m.toLocaleString()} ¥`;
     }
 
     auth.onAuthStateChanged(user => {
-        if (user) {
+        if(user) {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
-            initFilter(); loadData(); calculatePreview();
+            initFilter();
+            // Đặt ngày mặc định là hôm nay theo giờ Nhật Bản (2026-05-14)
+            const today = new Date().toLocaleDateString('en-CA'); // Trả về yyyy-mm-dd
+            document.getElementById('workDate').value = today;
+            syncFilterWithDate();
         }
     });
 
     async function saveData() {
-        const user = auth.currentUser;
-        const date = document.getElementById('workDate').value;
-        const id = document.getElementById('edit-id').value;
-        if(!date) return alert("Chọn ngày!");
-        
-        const res = getCalc();
-        // Lấy chính xác chuỗi yyyy-mm từ ô date để tránh lệch múi giờ
-        const thangNam = date.substring(0, 7); 
-
+        const u = auth.currentUser, d = document.getElementById('workDate').value, id = document.getElementById('edit-id').value;
+        if(!d) return alert("Chọn ngày!");
+        const res = getCalc(), ym = d.substring(0, 7);
         const data = {
-            uid: user.uid, ho_ten: user.displayName || user.email, ngay: date,
+            uid: u.uid, ho_ten: u.displayName || u.email, ngay: d,
             gio_vao: document.getElementById('timeIn').value, gio_ra: document.getElementById('timeOut').value,
-            giai_lao: document.getElementById('breakMin').value, gio_lam: res.basic, tang_ca: res.ot,
-            thanh_tien: res.money, thang_nam: thangNam
+            giai_lao: document.getElementById('breakMin').value, gio_lam: res.b, tang_ca: res.ot,
+            thanh_tien: res.m, thang_nam: ym
         };
-
         try {
             if(id) await db.collection("bang_luong").doc(id).update(data);
             else await db.collection("bang_luong").add(data);
-            alert("Đã lưu dữ liệu vào " + thangNam); 
+            alert("Đã lưu vào " + ym);
             resetForm();
         } catch(e) { alert(e.message); }
     }
 
     function loadData() {
         const val = document.getElementById('filterMonthYear').value;
-        const user = auth.currentUser;
+        const u = auth.currentUser;
+        if(!val) return;
         let q = db.collection("bang_luong").where("thang_nam", "==", val);
-        if (!ADMIN_LIST.includes(user.email)) q = q.where("uid", "==", user.uid);
+        if(u.email !== "phamvantan@gmail.com") q = q.where("uid", "==", u.uid);
 
-        q.onSnapshot(snapshot => {
-            let html = '', sHrs = 0, sOt = 0, sPay = 0;
-            let docs = []; snapshot.forEach(d => docs.push({id: d.id, ...d.data()}));
+        q.onSnapshot(snap => {
+            let html = '', sH = 0, sO = 0, sM = 0, docs = [];
+            snap.forEach(d => docs.push({id: d.id, ...d.data()}));
             docs.sort((a,b) => a.ngay.localeCompare(b.ngay));
-
             docs.forEach(d => {
-                sHrs += parseFloat(d.gio_lam); sOt += parseFloat(d.tang_ca); sPay += parseInt(d.thanh_tien);
+                sH += parseFloat(d.gio_lam); sO += parseFloat(d.tang_ca); sM += parseInt(d.thanh_tien);
                 html += `<tr><td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()}</td>
-                <td><div class="btn-group">
-                    <button class="bg-warning btn-sm" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
-                    <button class="bg-danger btn-sm" onclick="deleteData('${d.id}')">Xóa</button>
-                </div></td></tr>`;
+                <td><button class="bg-warning" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button></td></tr>`;
             });
-            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Không có dữ liệu tháng này</td></tr>';
-            document.getElementById('dataFooter').innerHTML = `<tr class="summary-row"><td colspan="3">TỔNG THÁNG</td><td>${sHrs.toFixed(2)}h</td><td>${sOt.toFixed(2)}h</td><td colspan="2" style="color:red; font-size:16px">${sPay.toLocaleString()} ¥</td></tr>`;
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
+            document.getElementById('dataFooter').innerHTML = `<tr><td colspan="3">TỔNG</td><td>${sH.toFixed(2)}h</td><td>${sO.toFixed(2)}h</td><td colspan="2" style="color:red">${sM.toLocaleString()} ¥</td></tr>`;
         });
     }
 
-    function editData(id, date, tIn, tOut, bMin) {
-        document.getElementById('edit-id').value = id; document.getElementById('workDate').value = date;
-        document.getElementById('timeIn').value = tIn; document.getElementById('timeOut').value = tOut;
-        document.getElementById('breakMin').value = bMin; document.getElementById('btn-save').innerText = "CẬP NHẬT";
+    function editData(id, d, t1, t2, b) {
+        document.getElementById('edit-id').value = id; document.getElementById('workDate').value = d;
+        document.getElementById('timeIn').value = t1; document.getElementById('timeOut').value = t2;
+        document.getElementById('breakMin').value = b; document.getElementById('btn-save').innerText = "CẬP NHẬT";
         document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0);
     }
 
-    async function deleteData(id) { if(confirm("Xóa dòng này?")) await db.collection("bang_luong").doc(id).delete(); }
-
-    function resetForm() { 
-        document.getElementById('edit-id').value = ""; 
-        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU"; 
-        document.getElementById('btn-cancel').classList.add('hidden'); 
-        document.getElementById('workDate').valueAsDate = new Date();
+    function resetForm() {
+        document.getElementById('edit-id').value = ""; document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('btn-cancel').classList.add('hidden');
     }
-
-    function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("table-to-export")), `Luong_${document.getElementById('filterMonthYear').value}.xlsx`); }
 
     function initFilter() {
-        const s = document.getElementById('filterMonthYear'); if(s.options.length > 0) return;
+        const s = document.getElementById('filterMonthYear');
+        if(s.options.length > 0) return;
         const now = new Date();
-        const curY = now.getFullYear();
-        const curM = now.getMonth();
-        
-        for(let i = -6; i <= 12; i++) {
-            let d = new Date(curY, curM + i, 1);
-            let y = d.getFullYear();
-            let m = (d.getMonth() + 1).toString().padStart(2, '0');
-            let v = `${y}-${m}`;
-            s.add(new Option(`Tháng ${m}/${y}`, v, v === `${curY}-${(curM+1).toString().padStart(2,'0')}`));
+        // Tạo danh sách tháng từ năm 2025 đến hết 2026
+        for(let y = 2025; y <= 2026; y++) {
+            for(let m = 1; m <= 12; m++) {
+                let mm = m.toString().padStart(2, '0');
+                let v = `${y}-${mm}`;
+                s.add(new Option(`Tháng ${mm}/${y}`, v, v === "2026-05"));
+            }
         }
-        document.getElementById('workDate').valueAsDate = now;
     }
+
+    function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("table-to-export")), `Luong.xlsx`); }
 </script>
 </body>
 </html>
