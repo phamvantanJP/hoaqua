@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý Công 2026 - v2.0</title>
+    <title>Hệ Thống Quản Lý Công 2026</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <!-- Thư viện xuất Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
     <style>
         :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dark: #343a40; --info: #17a2b8; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 8px; }
@@ -29,15 +27,15 @@
         .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 800px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; font-size: 13px; }
-        th { background: #f8f9fa; position: sticky; top: 0; }
-        .summary-row { background: #e9ecef; font-weight: bold; }
-        .preview-salary { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; text-align: center; font-weight: bold; color: #856404; }
+        th { background: #f8f9fa; }
+        .preview-salary { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; text-align: center; font-weight: bold; color: #856404; border: 1px dashed #e5c05b; }
+        .summary-row { background: #f1f3f5; font-weight: bold; color: #d63031; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Auth Section (Giữ nguyên như cũ) -->
+    <!-- AUTH SECTION -->
     <div id="auth-section" class="card" style="max-width:380px; margin:40px auto;">
         <h2 id="auth-title" style="text-align:center;">Đăng Nhập</h2>
         <div id="reg-fields" class="hidden">
@@ -53,166 +51,148 @@
             <input type="password" id="repassword" placeholder="••••••">
         </div>
         <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
-        <p style="text-align:center; color: var(--primary); cursor:pointer;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
+        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px; margin-top:12px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
     </div>
 
-    <!-- Main Content -->
+    <!-- MAIN CONTENT -->
     <div id="main-content" class="hidden">
         <div class="card" style="display:flex; justify-content: space-between; align-items:center;">
-            <div>Chào: <b id="user-name" style="color: var(--primary);"></b></div>
-            <div style="display:flex; gap:5px;">
-                <button onclick="switchTab('tab-profile')" class="btn-sm bg-info">Cài đặt</button>
-                <button onclick="logout()" class="btn-sm bg-danger">Thoát</button>
-            </div>
-        </div>
-
-        <div id="admin-menu" class="hidden card" style="background: #e3f2fd;">
-            <h4 style="margin:0 0 8px 0;">QUẢN TRỊ VIÊN</h4>
-            <div class="btn-group">
-                <button onclick="switchTab('tab-cong')" class="btn-sm bg-success">Lịch Công</button>
-                <button onclick="switchTab('tab-users')" class="btn-sm bg-dark">Nhân Sự</button>
-            </div>
+            <div style="font-size:14px">Chào: <b id="user-name" style="color: var(--primary);"></b></div>
+            <button onclick="logout()" class="btn-sm bg-danger" style="flex:none">Thoát</button>
         </div>
 
         <div id="tab-cong">
             <div class="card">
-                <h3 id="form-title" style="margin-top:0;">Nhập Công</h3>
+                <h3 id="form-title" style="margin-top:0; font-size:16px;">Nhập Công</h3>
                 <input type="hidden" id="edit-id">
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <div><label>Ngày</label><input type="date" id="workDate"></div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div style="grid-column: span 2;"><label>Ngày</label><input type="date" id="workDate"></div>
+                    <div><label>Vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
+                    <div><label>Ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
                     <div><label>Giải lao (phút)</label><input type="number" id="breakMin" value="45" oninput="calculatePreview()"></div>
-                    <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
-                    <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
+                    <div id="salary-preview" class="preview-salary">Dự tính: 0 ¥</div>
                 </div>
-                <div id="salary-preview" class="preview-salary">Tiền công dự tính: 0 ¥</div>
                 <button class="btn-main" onclick="saveData()" id="btn-save">LƯU DỮ LIỆU</button>
-                <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:5px; background:#6c757d; color:white; padding:10px">Hủy</button>
+                <button id="btn-cancel" class="hidden" onclick="resetForm()" style="width:100%; margin-top:5px; background:#6c757d; color:white; padding:10px">Hủy bỏ</button>
             </div>
 
             <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <select id="filterMonth" style="width:140px;" onchange="loadData()"></select>
-                    <button class="btn-sm bg-success" onclick="exportExcel()" style="max-width: 150px;">📥 XUẤT EXCEL</button>
+                <div style="display: flex; justify-content: space-between; gap: 10px;">
+                    <select id="filterMonth" style="flex:1" onchange="loadData()"></select>
+                    <button class="btn-sm bg-success" onclick="exportExcel()">XUẤT EXCEL</button>
                 </div>
                 <div class="table-wrapper">
-                    <table id="table-to-export">
-                        <thead><tr id="table-header"></tr></thead>
+                    <table id="table-data">
+                        <thead>
+                            <tr><th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>TC</th><th>Thành tiền</th><th>Thao tác</th></tr>
+                        </thead>
                         <tbody id="dataBody"></tbody>
                         <tfoot id="dataFooter"></tfoot>
                     </table>
                 </div>
             </div>
         </div>
-
-        <!-- Các Tab khác (Giữ nguyên logic Profile và Users) -->
-        <div id="tab-profile" class="hidden">...</div>
-        <div id="tab-users" class="hidden">...</div>
     </div>
 </div>
 
 <script>
-    // --- CẤU HÌNH & KHỞI TẠO ---
-    const firebaseConfig = { /* Giữ nguyên config của bạn */ };
+    // --- FIREBASE CONFIG (DỮ LIỆU CỦA BẠN) ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyDzp1rjYmoxb8iFfMd0mcwgqeVimP4LXkw",
+        authDomain: "quanlyluong2026.firebaseapp.com",
+        projectId: "quanlyluong2026",
+        storageBucket: "quanlyluong2026.firebasestorage.app",
+        messagingSenderId: "293176773446",
+        appId: "1:293176773446:web:f736157bfdbce598fab347"
+    };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     const RATE_BASE = 1177;
-    const RATE_OT = 1177 * 1.25;
+    const RATE_OT = Math.round(1177 * 1.25);
+    let isLoginMode = true;
 
-    // --- LOGIC TÍNH TOÁN ---
-    function calculateSalary(tIn, tOut, bMin) {
-        if(!tIn || !tOut) return { hrs: 0, ot: 0, total: 0 };
+    // --- AUTH LOGIC ---
+    function toggleAuth() {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
+        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Hoàn Tất Đăng Ký";
+        document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
+        document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
+    }
+
+    async function handleAuth() {
+        const email = document.getElementById('email').value;
+        const pass = document.getElementById('password').value;
+        const name = document.getElementById('fullName').value;
+        try {
+            if (isLoginMode) {
+                await auth.signInWithEmailAndPassword(email, pass);
+            } else {
+                const res = await auth.createUserWithEmailAndPassword(email, pass);
+                await res.user.updateProfile({ displayName: name });
+                await db.collection("users").doc(res.user.uid).set({ ho_ten: name, email: email });
+                alert("Đăng ký thành công!");
+            }
+        } catch (e) { alert("Lỗi: " + e.message); }
+    }
+
+    function logout() { auth.signOut().then(() => location.reload()); }
+
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('user-name').innerText = user.displayName || user.email;
+            initFilter();
+            loadData();
+            calculatePreview();
+        } else {
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('main-content').classList.add('hidden');
+        }
+    });
+
+    // --- CÔNG THỨC TÍNH LƯƠNG ---
+    function getCalc() {
+        const tIn = document.getElementById('timeIn').value;
+        const tOut = document.getElementById('timeOut').value;
+        const bMin = parseInt(document.getElementById('breakMin').value) || 0;
+        
         const start = new Date(`2026-01-01 ${tIn}`);
         let end = new Date(`2026-01-01 ${tOut}`);
         if (end < start) end.setDate(end.getDate() + 1);
         
-        let diffHrs = (end - start) / 3600000 - (bMin / 60);
-        diffHrs = Math.max(0, diffHrs);
+        let totalHrs = (end - start) / 3600000 - (bMin / 60);
+        totalHrs = Math.max(0, totalHrs);
         
-        let basicHrs = Math.min(8, diffHrs);
-        let otHrs = Math.max(0, diffHrs - 8);
-        let money = (basicHrs * RATE_BASE) + (otHrs * RATE_OT);
+        let basic = totalHrs > 8 ? 8 : totalHrs;
+        let ot = totalHrs > 8 ? (totalHrs - 8) : 0;
+        let money = Math.round((basic * RATE_BASE) + (ot * RATE_OT));
         
-        return { 
-            hrs: basicHrs.toFixed(2), 
-            ot: otHrs.toFixed(2), 
-            money: Math.round(money) 
-        };
+        return { basic: basic.toFixed(2), ot: ot.toFixed(2), money };
     }
 
     function calculatePreview() {
-        const res = calculateSalary(
-            document.getElementById('timeIn').value,
-            document.getElementById('timeOut').value,
-            document.getElementById('breakMin').value
-        );
-        document.getElementById('salary-preview').innerText = `Dự tính: ${res.hrs}h công + ${res.ot}h OT = ${res.money.toLocaleString()} ¥`;
+        const c = getCalc();
+        document.getElementById('salary-preview').innerText = `Dự tính: ${c.basic}h + OT ${c.ot}h = ${c.money.toLocaleString()} ¥`;
     }
 
     // --- DỮ LIỆU ---
-    function loadData() {
-        const user = auth.currentUser;
-        const month = document.getElementById('filterMonth').value;
-        const isAdmin = ADMIN_LIST.includes(user.email);
-        let q = db.collection("bang_luong").where("thang", "==", month).orderBy("ngay", "asc");
-        if (!isAdmin) q = q.where("uid", "==", user.uid);
-
-        q.onSnapshot(snapshot => {
-            let html = '';
-            let sumHrs = 0, sumOt = 0, sumMoney = 0;
-            
-            snapshot.forEach(doc => {
-                const d = doc.data();
-                const isApproved = d.status === 'approved';
-                sumHrs += parseFloat(d.gio_lam || 0);
-                sumOt += parseFloat(d.tang_ca || 0);
-                sumMoney += parseInt(d.thanh_tien || 0);
-
-                html += `<tr>
-                    <td>${d.ngay}</td>
-                    <td>${d.ho_ten}</td>
-                    <td>${d.gio_vao}-${d.gio_ra}</td>
-                    <td>${d.gio_lam}</td>
-                    <td>${d.tang_ca}</td>
-                    <td style="font-weight:bold">${parseInt(d.thanh_tien).toLocaleString()} ¥</td>
-                    ${isAdmin ? `<td>${isApproved?'✅':'⏳'}</td>` : ''}
-                    <td>
-                        <button class="btn-sm bg-warning" onclick="editData('${doc.id}', '${d.ngay}', '${d.gio_vao}', '${d.gio_ra}', ${d.giai_lao})">Sửa</button>
-                    </td>
-                </tr>`;
-            });
-
-            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="10">Trống</td></tr>';
-            
-            // Render Footer tổng
-            document.getElementById('dataFooter').innerHTML = `
-                <tr class="summary-row">
-                    <td colspan="3">TỔNG CỘNG</td>
-                    <td>${sumHrs.toFixed(2)}</td>
-                    <td>${sumOt.toFixed(2)}</td>
-                    <td colspan="${isAdmin ? 3 : 2}" style="color:red; font-size:15px">${sumMoney.toLocaleString()} ¥</td>
-                </tr>`;
-        });
-    }
-
     async function saveData() {
         const user = auth.currentUser;
         const id = document.getElementById('edit-id').value;
         const date = document.getElementById('workDate').value;
-        const res = calculateSalary(
-            document.getElementById('timeIn').value,
-            document.getElementById('timeOut').value,
-            document.getElementById('breakMin').value
-        );
+        const c = getCalc();
 
         const data = {
             uid: user.uid, ho_ten: user.displayName || user.email,
-            ngay: date, gio_vao: document.getElementById('timeIn').value, 
-            gio_ra: document.getElementById('timeOut').value, 
+            ngay: date, gio_vao: document.getElementById('timeIn').value,
+            gio_ra: document.getElementById('timeOut').value,
             giai_lao: parseInt(document.getElementById('breakMin').value),
-            gio_lam: res.hrs, tang_ca: res.ot, thanh_tien: res.money,
-            thang: date.substring(5, 7), status: "pending"
+            gio_lam: c.basic, tang_ca: c.ot, thanh_tien: c.money,
+            thang: date.substring(5, 7)
         };
 
         if(id) await db.collection("bang_luong").doc(id).update(data);
@@ -220,30 +200,68 @@
         resetForm();
     }
 
-    // --- XUẤT EXCEL ---
-    function exportExcel() {
-        const table = document.getElementById("table-to-export");
-        const wb = XLSX.utils.table_to_book(table, { sheet: "Bảng Công" });
-        XLSX.writeFile(wb, `Bang_Cong_Thang_${document.getElementById('filterMonth').value}_2026.xlsx`);
+    function loadData() {
+        const user = auth.currentUser;
+        const month = document.getElementById('filterMonth').value;
+        db.collection("bang_luong").where("uid", "==", user.uid).where("thang", "==", month).orderBy("ngay", "asc")
+        .onSnapshot(snapshot => {
+            let html = '', totalHrs = 0, totalOt = 0, totalMoney = 0;
+            snapshot.forEach(doc => {
+                const d = doc.data();
+                totalHrs += parseFloat(d.gio_lam);
+                totalOt += parseFloat(d.tang_ca);
+                totalMoney += d.thanh_tien;
+                html += `<tr>
+                    <td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td>
+                    <td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()}</td>
+                    <td><button class="btn-sm bg-warning" onclick="editData('${doc.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button></td>
+                </tr>`;
+            });
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Chưa có dữ liệu</td></tr>';
+            document.getElementById('dataFooter').innerHTML = `
+                <tr class="summary-row">
+                    <td colspan="3">TỔNG CỘNG</td>
+                    <td>${totalHrs.toFixed(2)}</td><td>${totalOt.toFixed(2)}</td>
+                    <td colspan="2" style="font-size:16px">${totalMoney.toLocaleString()} ¥</td>
+                </tr>`;
+        });
     }
 
-    // Các hàm phụ trợ (Auth, ResetForm, Toggle) giữ nguyên và bổ sung calculatePreview() vào init
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            /* ... code cũ ... */
-            renderTableHeader(ADMIN_LIST.includes(user.email));
-            initFilter();
-            calculatePreview();
+    function editData(id, date, tIn, tOut, bMin) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('workDate').value = date;
+        document.getElementById('timeIn').value = tIn;
+        document.getElementById('timeOut').value = tOut;
+        document.getElementById('breakMin').value = bMin;
+        document.getElementById('btn-save').innerText = "CẬP NHẬT";
+        document.getElementById('btn-cancel').classList.remove('hidden');
+        calculatePreview();
+        window.scrollTo(0,0);
+    }
+
+    function resetForm() {
+        document.getElementById('edit-id').value = "";
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('btn-cancel').classList.add('hidden');
+        calculatePreview();
+    }
+
+    function initFilter() {
+        const s = document.getElementById('filterMonth');
+        if(s.options.length > 0) return;
+        const now = new Date();
+        for(let i=1; i<=12; i++) {
+            let v = i < 10 ? '0'+i : i;
+            s.add(new Option("Tháng " + v, v, i == now.getMonth()+1, i == now.getMonth()+1));
         }
-    });
-
-    function renderTableHeader(isAdmin) {
-        let h = `<th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>TC</th><th>Tiền Công</th>`;
-        h += isAdmin ? `<th>Duyệt</th><th>Thao tác</th>` : `<th>Thao tác</th>`;
-        document.getElementById('table-header').innerHTML = h;
+        document.getElementById('workDate').valueAsDate = now;
     }
-    
-    /* ... Copy lại các hàm handleAuth, toggleAuth, logout từ code cũ của bạn ... */
+
+    function exportExcel() {
+        const table = document.getElementById("table-data");
+        const wb = XLSX.utils.table_to_book(table);
+        XLSX.writeFile(wb, `Bang_Cong_${document.getElementById('filterMonth').value}.xlsx`);
+    }
 </script>
 </body>
 </html>
