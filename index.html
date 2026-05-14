@@ -3,60 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Công & Lương Đa Năm</title>
+    <title>Quản Lý Công & Lương 2026+</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --dark: #343a40; }
+        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; --info: #17a2b8; }
         body { font-family: -apple-system, sans-serif; background: #f0f2f5; margin: 0; padding: 8px; }
         .container { max-width: 1100px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid #e1e4e8; }
-        input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; outline: none; }
-        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.3s; font-size: 13px; }
-        .btn-main { background: var(--primary); color: white; width: 100%; padding: 12px; margin-top: 8px; text-transform: uppercase; }
+        input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; }
+        .btn-main { background: var(--primary); color: white; width: 100%; padding: 12px; margin-top: 8px; }
         .btn-group { display: flex; flex-wrap: wrap; gap: 4px; }
-        .btn-sm { padding: 6px 10px; color: white; flex: 1; min-width: 60px; text-align: center; }
+        .btn-sm { padding: 6px 10px; color: white; flex: 1; }
         .bg-success { background: var(--success); }
         .bg-danger { background: var(--danger); }
         .bg-warning { background: var(--warning); color: black; }
+        .bg-info { background: var(--info); }
         .hidden { display: none; }
         .table-wrapper { overflow-x: auto; background: white; border-radius: 8px; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; min-width: 850px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; font-size: 13px; }
-        th { background: #f8f9fa; position: sticky; top: 0; }
+        th { background: #f8f9fa; }
         .summary-row { background: #e9ecef; font-weight: bold; }
-        .preview-salary { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center; font-weight: bold; color: #856404; border: 1px dashed #856404; font-size: 15px; }
+        .preview-salary { background: #fff3cd; padding: 12px; border-radius: 8px; margin: 10px 0; text-align: center; font-weight: bold; color: #856404; border: 1px dashed #856404; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- AUTH SECTION -->
+    <!-- ĐĂNG NHẬP -->
     <div id="auth-section" class="card" style="max-width:380px; margin:40px auto;">
-        <h2 id="auth-title" style="text-align:center;">Hệ Thống 2026+</h2>
-        <div id="reg-fields" class="hidden">
-            <label>Họ và Tên</label>
-            <input type="text" id="fullName" placeholder="Nhập tên">
-        </div>
-        <label>Email</label>
-        <input type="email" id="email" placeholder="example@gmail.com">
-        <label>Mật khẩu</label>
-        <input type="password" id="password" placeholder="••••••">
-        <div id="retype-reg-fields" class="hidden">
-            <label>Nhập lại mật khẩu</label>
-            <input type="password" id="repassword" placeholder="••••••">
-        </div>
+        <h2 id="auth-title" style="text-align:center;">Hệ Thống Lương</h2>
+        <div id="reg-fields" class="hidden"><label>Họ và Tên</label><input type="text" id="fullName" placeholder="Nhập tên"></div>
+        <label>Email</label><input type="email" id="email" placeholder="example@gmail.com">
+        <label>Mật khẩu</label><input type="password" id="password" placeholder="••••••">
+        <div id="retype-reg-fields" class="hidden"><label>Nhập lại mật khẩu</label><input type="password" id="repassword" placeholder="••••••"></div>
         <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
-        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký ngay</p>
+        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký</p>
     </div>
 
-    <!-- MAIN CONTENT -->
+    <!-- NỘI DUNG CHÍNH -->
     <div id="main-content" class="hidden">
-        <div class="card" style="display:flex; justify-content: space-between; align-items:center;">
+        <div class="card" style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
             <div>Chào: <b id="user-name" style="color: var(--primary);"></b></div>
-            <button onclick="logout()" class="btn-sm bg-danger" style="flex:none">Thoát</button>
+            <div style="display: flex; gap: 5px;">
+                <button onclick="changePassword()" class="btn-sm bg-info">Đổi mật khẩu</button>
+                <button onclick="logout()" class="btn-sm bg-danger">Thoát</button>
+            </div>
         </div>
 
         <div class="card">
@@ -76,13 +72,11 @@
         <div class="card">
             <div style="display: flex; justify-content: space-between; margin-bottom:10px">
                 <select id="filterMonthYear" style="width:180px;" onchange="loadData()"></select>
-                <button class="btn-sm bg-success" onclick="exportExcel()">📥 XUẤT EXCEL</button>
+                <button class="btn-sm bg-success" onclick="exportExcel()" style="max-width: 120px;">📥 EXCEL</button>
             </div>
             <div class="table-wrapper">
                 <table id="table-to-export">
-                    <thead>
-                        <tr><th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công(8h)</th><th>Tăng ca</th><th>Tiền Yên</th><th>Thao tác</th></tr>
-                    </thead>
+                    <thead><tr><th>Ngày</th><th>Họ Tên</th><th>Giờ</th><th>Công</th><th>OT</th><th>Tiền Yên</th><th>Sửa/Xóa</th></tr></thead>
                     <tbody id="dataBody"></tbody>
                     <tfoot id="dataFooter"></tfoot>
                 </table>
@@ -92,7 +86,6 @@
 </div>
 
 <script>
-    // --- CẤU HÌNH FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyDzp1rjYmoxb8iFfMd0mcwgqeVimP4LXkw",
         authDomain: "quanlyluong2026.firebaseapp.com",
@@ -105,16 +98,14 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     const RATE_BASE = 1177; 
     const RATE_OT = Math.round(1177 * 1.25);
+    const ADMIN_LIST = ["admin@1177.com", "phamvantan@gmail.com"];
     let isLoginMode = true;
 
-    // --- AUTH LOGIC ---
     function toggleAuth() {
         isLoginMode = !isLoginMode;
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
-        document.getElementById('btn-auth').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
         document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
     }
@@ -123,40 +114,37 @@
         const email = document.getElementById('email').value;
         const pass = document.getElementById('password').value;
         try {
-            if (isLoginMode) {
-                await auth.signInWithEmailAndPassword(email, pass);
-            } else {
+            if (isLoginMode) { await auth.signInWithEmailAndPassword(email, pass); } 
+            else {
                 const name = document.getElementById('fullName').value;
-                const repass = document.getElementById('repassword').value;
-                if(!name || pass !== repass) return alert("Kiểm tra lại thông tin!");
+                if(pass !== document.getElementById('repassword').value) return alert("Mật khẩu không khớp!");
                 const res = await auth.createUserWithEmailAndPassword(email, pass);
                 await res.user.updateProfile({ displayName: name });
-                await db.collection("users").doc(res.user.uid).set({ ho_ten: name, email: email });
             }
         } catch (e) { alert("Lỗi: " + e.message); }
     }
 
+    async function changePassword() {
+        const newPass = prompt("Nhập mật khẩu mới:");
+        if (newPass && newPass.length >= 6) {
+            try {
+                await auth.currentUser.updatePassword(newPass);
+                alert("Đã đổi mật khẩu thành công!");
+            } catch (e) { alert("Lỗi: Bạn cần đăng nhập lại trước khi đổi mật khẩu."); logout(); }
+        } else if(newPass) { alert("Mật khẩu phải ít nhất 6 ký tự!"); }
+    }
+
     function logout() { auth.signOut(); location.reload(); }
 
-    // --- TÍNH TOÁN ---
     function getCalc() {
-        const workDate = document.getElementById('workDate').value || "2026-01-01";
-        const tIn = document.getElementById('timeIn').value;
-        const tOut = document.getElementById('timeOut').value;
-        const bMin = parseInt(document.getElementById('breakMin').value) || 0;
-        
-        const start = new Date(`${workDate} ${tIn}`);
-        let end = new Date(`${workDate} ${tOut}`);
-        if (end <= start) end.setDate(end.getDate() + 1); // Xử lý ca đêm
-        
-        let totalHrs = (end - start) / 3600000 - (bMin / 60);
-        totalHrs = Math.max(0, totalHrs);
-        
-        let basic = Math.min(8, totalHrs);
-        let ot = Math.max(0, totalHrs - 8);
-        let money = (basic * RATE_BASE) + (ot * RATE_OT);
-        
-        return { basic: basic.toFixed(2), ot: ot.toFixed(2), money: Math.round(money) };
+        const date = document.getElementById('workDate').value || "2026-01-01";
+        const start = new Date(`${date} ${document.getElementById('timeIn').value}`);
+        let end = new Date(`${date} ${document.getElementById('timeOut').value}`);
+        if (end <= start) end.setDate(end.getDate() + 1);
+        let total = (end - start) / 3600000 - (parseInt(document.getElementById('breakMin').value) / 60);
+        total = Math.max(0, total);
+        let basic = Math.min(8, total), ot = Math.max(0, total - 8);
+        return { basic: basic.toFixed(2), ot: ot.toFixed(2), money: Math.round(basic*RATE_BASE + ot*RATE_OT) };
     }
 
     function calculatePreview() {
@@ -164,125 +152,76 @@
         document.getElementById('salary-preview').innerText = `Dự tính: ${res.basic}h + ${res.ot}h OT = ${res.money.toLocaleString()} ¥`;
     }
 
-    // --- DỮ LIỆU ---
     auth.onAuthStateChanged(user => {
         if (user) {
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
-            initFilter();
-            loadData();
-            calculatePreview();
-        } else {
-            document.getElementById('auth-section').classList.remove('hidden');
-            document.getElementById('main-content').classList.add('hidden');
+            initFilter(); loadData(); calculatePreview();
         }
     });
 
     async function saveData() {
         const user = auth.currentUser;
-        const id = document.getElementById('edit-id').value;
         const date = document.getElementById('workDate').value;
-        if(!date) return alert("Vui lòng chọn ngày!");
-
+        const id = document.getElementById('edit-id').value;
+        if(!date) return alert("Chọn ngày!");
         const res = getCalc();
         const data = {
-            uid: user.uid, 
-            ho_ten: user.displayName || user.email,
-            ngay: date, 
-            gio_vao: document.getElementById('timeIn').value,
-            gio_ra: document.getElementById('timeOut').value,
-            giai_lao: parseInt(document.getElementById('breakMin').value),
-            gio_lam: res.basic, 
-            tang_ca: res.ot, 
-            thanh_tien: res.money,
-            thang_nam: date.substring(0, 7), // Định dạng 2026-05
-            status: "pending"
+            uid: user.uid, ho_ten: user.displayName || user.email, ngay: date,
+            gio_vao: document.getElementById('timeIn').value, gio_ra: document.getElementById('timeOut').value,
+            giai_lao: document.getElementById('breakMin').value, gio_lam: res.basic, tang_ca: res.ot,
+            thanh_tien: res.money, thang_nam: date.substring(0, 7)
         };
-
         try {
             if(id) await db.collection("bang_luong").doc(id).update(data);
             else await db.collection("bang_luong").add(data);
-            alert("Đã lưu!");
-            resetForm();
-        } catch(e) { alert("Lỗi: " + e.message); }
+            alert("Đã lưu!"); resetForm();
+        } catch(e) { alert(e.message); }
     }
 
     function loadData() {
+        const val = document.getElementById('filterMonthYear').value;
         const user = auth.currentUser;
-        const filterVal = document.getElementById('filterMonthYear').value;
-        const isAdmin = ADMIN_LIST.includes(user.email);
-        
-        let q = db.collection("bang_luong").where("thang_nam", "==", filterVal).orderBy("ngay", "asc");
-        if (!isAdmin) q = q.where("uid", "==", user.uid);
+        let q = db.collection("bang_luong").where("thang_nam", "==", val);
+        if (!ADMIN_LIST.includes(user.email)) q = q.where("uid", "==", user.uid);
 
         q.onSnapshot(snapshot => {
-            let html = '';
-            let sHrs = 0, sOt = 0, sPay = 0;
-            snapshot.forEach(doc => {
-                const d = doc.data();
+            let html = '', sHrs = 0, sOt = 0, sPay = 0;
+            let docs = []; snapshot.forEach(d => docs.push({id: d.id, ...d.data()}));
+            docs.sort((a,b) => a.ngay.localeCompare(b.ngay)); // Sắp xếp tại máy khách nếu chưa có Index
+
+            docs.forEach(d => {
                 sHrs += parseFloat(d.gio_lam); sOt += parseFloat(d.tang_ca); sPay += parseInt(d.thanh_tien);
-                html += `<tr>
-                    <td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td>
-                    <td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()} ¥</td>
-                    <td>
-                        <div class="btn-group">
-                            <button class="btn-sm bg-warning" onclick="editData('${doc.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
-                            <button class="btn-sm bg-danger" onclick="deleteData('${doc.id}')">Xóa</button>
-                        </div>
-                    </td>
-                </tr>`;
+                html += `<tr><td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()}</td>
+                <td><button class="bg-warning" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
+                <button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button></td></tr>`;
             });
-            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Không có dữ liệu tháng này</td></tr>';
-            document.getElementById('dataFooter').innerHTML = `
-                <tr class="summary-row">
-                    <td colspan="3">TỔNG CỘNG (${filterVal})</td>
-                    <td>${sHrs.toFixed(2)}h</td><td>${sOt.toFixed(2)}h</td>
-                    <td colspan="2" style="color:red; font-size:15px;">${sPay.toLocaleString()} ¥</td>
-                </tr>`;
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
+            document.getElementById('dataFooter').innerHTML = `<tr class="summary-row"><td colspan="3">TỔNG</td><td>${sHrs.toFixed(2)}h</td><td>${sOt.toFixed(2)}h</td><td colspan="2" style="color:red">${sPay.toLocaleString()} ¥</td></tr>`;
         });
     }
 
     function editData(id, date, tIn, tOut, bMin) {
-        document.getElementById('edit-id').value = id;
-        document.getElementById('workDate').value = date;
-        document.getElementById('timeIn').value = tIn;
-        document.getElementById('timeOut').value = tOut;
-        document.getElementById('breakMin').value = bMin;
-        document.getElementById('btn-save').innerText = "CẬP NHẬT";
-        document.getElementById('btn-cancel').classList.remove('hidden');
-        calculatePreview();
-        window.scrollTo(0,0);
+        document.getElementById('edit-id').value = id; document.getElementById('workDate').value = date;
+        document.getElementById('timeIn').value = tIn; document.getElementById('timeOut').value = tOut;
+        document.getElementById('breakMin').value = bMin; document.getElementById('btn-save').innerText = "CẬP NHẬT";
+        document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0);
     }
 
-    async function deleteData(id) {
-        if(confirm("Xóa bản ghi này?")) await db.collection("bang_luong").doc(id).delete();
-    }
+    async function deleteData(id) { if(confirm("Xóa dòng này?")) await db.collection("bang_luong").doc(id).delete(); }
 
-    function resetForm() {
-        document.getElementById('edit-id').value = "";
-        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
-        document.getElementById('btn-cancel').classList.add('hidden');
-    }
+    function resetForm() { document.getElementById('edit-id').value = ""; document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU"; document.getElementById('btn-cancel').classList.add('hidden'); }
 
-    function exportExcel() {
-        const table = document.getElementById("table-to-export");
-        const wb = XLSX.utils.table_to_book(table);
-        XLSX.writeFile(wb, `BangCong_${document.getElementById('filterMonthYear').value}.xlsx`);
-    }
+    function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("table-to-export")), `Luong_${document.getElementById('filterMonthYear').value}.xlsx`); }
 
     function initFilter() {
-        const s = document.getElementById('filterMonthYear');
-        if(s.options.length > 0) return;
+        const s = document.getElementById('filterMonthYear'); if(s.options.length > 0) return;
         const now = new Date();
-        const curMY = now.toISOString().substring(0, 7); // 2026-05
-
-        // Tạo danh sách 12 tháng gần nhất và 12 tháng tới
-        for(let i = -12; i <= 12; i++) {
+        for(let i = -6; i <= 12; i++) {
             let d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-            let val = d.toISOString().substring(0, 7);
-            let label = "Tháng " + (d.getMonth() + 1) + "/" + d.getFullYear();
-            s.add(new Option(label, val, val === curMY, val === curMY));
+            let v = d.toISOString().substring(0, 7);
+            s.add(new Option(`Tháng ${d.getMonth()+1}/${d.getFullYear()}`, v, v === now.toISOString().substring(0, 7)));
         }
         document.getElementById('workDate').valueAsDate = now;
     }
