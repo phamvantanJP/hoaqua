@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản Lý Thời gian làm việc)</title>
+    <title>Quản Lý Thời gian làm việc</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -37,15 +37,10 @@
     <!-- LOGIN/REGISTER -->
     <div id="auth-section" class="card" style="max-width:350px; margin:50px auto;">
         <h2 id="auth-title" style="text-align:center">Quản lý thời gian làm việc</h2>
-        <div id="reg-fields" class="hidden">
-            <label>Họ Tên</label><input type="text" id="fullName">
-        </div>
+        <div id="reg-fields" class="hidden"><label>Họ Tên</label><input type="text" id="fullName"></div>
         <label>Email</label><input type="email" id="email">
         <label>Mật khẩu</label><input type="password" id="password">
-        <!-- Thêm trường xác nhận cho đăng ký -->
-        <div id="confirm-reg-fields" class="hidden">
-            <label>Xác nhận mật khẩu</label><input type="password" id="confirmPassword">
-        </div>
+        <div id="confirm-reg-fields" class="hidden"><label>Xác nhận mật khẩu</label><input type="password" id="confirmPassword"></div>
         <button class="btn-main" onclick="handleAuth()" id="btn-auth">Đăng Nhập</button>
         <p onclick="toggleAuth()" id="toggle-text" style="text-align:center; color:blue; cursor:pointer; font-size:12px; margin-top:10px">Chưa có tài khoản? Đăng ký</p>
     </div>
@@ -65,6 +60,11 @@
             <input type="hidden" id="edit-id">
             <label>Ngày làm việc</label>
             <input type="date" id="workDate" onchange="syncFilterWithDate()">
+            
+            <!-- Ô NHẬP LƯƠNG HỆ SỐ -->
+            <label>Lương cơ bản (Yên/giờ)</label>
+            <input type="number" id="baseRateInput" value="1177" oninput="calculatePreview()">
+
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
                 <div><label>Vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
                 <div><label>Ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
@@ -116,8 +116,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const RATE_BASE = 1177; 
-    const RATE_OT = Math.round(1177 * 1.25);
     let isLoginMode = true;
 
     function toggleAuth() {
@@ -130,14 +128,11 @@
     }
 
     async function handleAuth() {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
+        const e = document.getElementById('email').value, p = document.getElementById('password').value;
         try {
-            if(isLoginMode) {
-                await auth.signInWithEmailAndPassword(e, p);
-            } else {
-                const n = document.getElementById('fullName').value;
-                const cp = document.getElementById('confirmPassword').value;
+            if(isLoginMode) await auth.signInWithEmailAndPassword(e, p);
+            else {
+                const n = document.getElementById('fullName').value, cp = document.getElementById('confirmPassword').value;
                 if(!n) return alert("Vui lòng nhập họ tên!");
                 if(p !== cp) return alert("Mật khẩu xác nhận không khớp!");
                 const res = await auth.createUserWithEmailAndPassword(e, p);
@@ -148,15 +143,12 @@
     }
 
     function logout() { auth.signOut(); location.reload(); }
-
     function openPwModal() { document.getElementById('pw-modal').classList.remove('hidden'); }
     function closePwModal() { document.getElementById('pw-modal').classList.add('hidden'); }
 
     async function submitChangePassword() {
         const user = auth.currentUser;
-        const oldP = document.getElementById('oldPass').value;
-        const newP = document.getElementById('newPass').value;
-        const confP = document.getElementById('confirmPass').value;
+        const oldP = document.getElementById('oldPass').value, newP = document.getElementById('newPass').value, confP = document.getElementById('confirmPass').value;
         if(!oldP || !newP || !confP) return alert("Vui lòng điền đủ thông tin!");
         if(newP !== confP) return alert("Xác nhận không khớp!");
         try {
@@ -171,27 +163,31 @@
     function syncFilterWithDate() {
         const date = document.getElementById('workDate').value;
         if(date) {
-            const ym = date.substring(0, 7);
-            document.getElementById('filterMonthYear').value = ym;
+            document.getElementById('filterMonthYear').value = date.substring(0, 7);
             loadData();
             calculatePreview();
         }
     }
 
+    // TÍNH TOÁN DỰA TRÊN Ô NHẬP LƯƠNG
     function getCalc() {
         const d = document.getElementById('workDate').value || "2026-05-14";
+        const rate = parseInt(document.getElementById('baseRateInput').value) || 1177;
+        const rateOT = Math.round(rate * 1.25);
+        
         const t1 = new Date(`${d}T${document.getElementById('timeIn').value}`);
         let t2 = new Date(`${d}T${document.getElementById('timeOut').value}`);
         if(t2 <= t1) t2.setDate(t2.getDate() + 1);
+        
         let total = (t2 - t1)/3600000 - (document.getElementById('breakMin').value/60);
         total = Math.max(0, total);
         let b = Math.min(8, total), ot = Math.max(0, total - 8);
-        return { b: b.toFixed(2), ot: ot.toFixed(2), m: Math.round(b*RATE_BASE + ot*RATE_OT) };
+        return { b: b.toFixed(2), ot: ot.toFixed(2), m: Math.round(b*rate + ot*rateOT), currentRate: rate };
     }
 
     function calculatePreview() {
         const res = getCalc();
-        document.getElementById('salary-preview').innerText = `${res.b}h + ${res.ot}h OT = ${res.m.toLocaleString()} ¥`;
+        document.getElementById('salary-preview').innerText = `${res.b}h + ${res.ot}h OT (Hệ số: ${res.currentRate}) = ${res.m.toLocaleString()} ¥`;
     }
 
     auth.onAuthStateChanged(user => {
@@ -200,8 +196,7 @@
             document.getElementById('main-content').classList.remove('hidden');
             document.getElementById('user-name').innerText = user.displayName || user.email;
             initFilter();
-            const today = new Date().toLocaleDateString('en-CA');
-            document.getElementById('workDate').value = today;
+            document.getElementById('workDate').value = new Date().toLocaleDateString('en-CA');
             syncFilterWithDate();
         }
     });
@@ -209,12 +204,14 @@
     async function saveData() {
         const u = auth.currentUser, d = document.getElementById('workDate').value, id = document.getElementById('edit-id').value;
         if(!d) return alert("Chọn ngày!");
-        const res = getCalc(), ym = d.substring(0, 7);
+        const res = getCalc();
         const data = {
             uid: u.uid, ho_ten: u.displayName || u.email, ngay: d,
             gio_vao: document.getElementById('timeIn').value, gio_ra: document.getElementById('timeOut').value,
-            giai_lao: document.getElementById('breakMin').value, gio_lam: res.b, tang_ca: res.ot,
-            thanh_tien: res.m, thang_nam: ym
+            giai_lao: document.getElementById('breakMin').value, 
+            he_so_luong: res.currentRate, // LƯU LẠI HỆ SỐ LÚC NHẬP
+            gio_lam: res.b, tang_ca: res.ot,
+            thanh_tien: res.m, thang_nam: d.substring(0, 7)
         };
         try {
             if(id) await db.collection("bang_luong").doc(id).update(data);
@@ -231,8 +228,7 @@
     }
 
     function loadData() {
-        const val = document.getElementById('filterMonthYear').value;
-        const u = auth.currentUser;
+        const val = document.getElementById('filterMonthYear').value, u = auth.currentUser;
         if(!val || !u) return;
         let q = db.collection("bang_luong").where("thang_nam", "==", val);
         if(u.email !== "phamvantan@gmail.com") q = q.where("uid", "==", u.uid);
@@ -243,7 +239,7 @@
             docs.forEach(d => {
                 sH += parseFloat(d.gio_lam); sO += parseFloat(d.tang_ca); sM += parseInt(d.thanh_tien);
                 html += `<tr><td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()}</td>
-                <td><button class="bg-warning" style="margin-bottom:2px" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
+                <td><button class="bg-warning" style="margin-bottom:2px" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao},${d.he_so_luong || 1177})">Sửa</button>
                 <button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button></td></tr>`;
             });
             document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
@@ -251,17 +247,24 @@
         });
     }
 
-    function editData(id, d, t1, t2, b) {
-        document.getElementById('edit-id').value = id; document.getElementById('workDate').value = d;
-        document.getElementById('timeIn').value = t1; document.getElementById('timeOut').value = t2;
-        document.getElementById('breakMin').value = b; document.getElementById('btn-save').innerText = "CẬP NHẬT";
-        document.getElementById('btn-cancel').classList.remove('hidden'); window.scrollTo(0,0);
+    function editData(id, d, t1, t2, b, rate) {
+        document.getElementById('edit-id').value = id; 
+        document.getElementById('workDate').value = d;
+        document.getElementById('timeIn').value = t1; 
+        document.getElementById('timeOut').value = t2;
+        document.getElementById('breakMin').value = b; 
+        document.getElementById('baseRateInput').value = rate; // Đổ hệ số lương cũ vào để sửa
+        document.getElementById('btn-save').innerText = "CẬP NHẬT";
+        document.getElementById('btn-cancel').classList.remove('hidden'); 
+        window.scrollTo(0,0);
         calculatePreview();
     }
 
     function resetForm() {
-        document.getElementById('edit-id').value = ""; document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU";
         document.getElementById('btn-cancel').classList.add('hidden');
+        document.getElementById('baseRateInput').value = 1177; // Reset về mặc định
     }
 
     function initFilter() {
@@ -275,7 +278,6 @@
             }
         }
     }
-
     function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("table-to-export")), `Luong.xlsx`); }
 </script>
 </body>
