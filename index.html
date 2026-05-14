@@ -14,9 +14,10 @@
         .container { max-width: 1100px; margin: auto; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid #e1e4e8; }
         input, select { width: 100%; padding: 10px; margin: 4px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; }
-        .btn-main { background: var(--primary); color: white; width: 100%; padding: 12px; margin-top: 8px; }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 4px; }
+        button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; font-size: 13px; transition: 0.2s; }
+        button:active { transform: scale(0.98); }
+        .btn-main { background: var(--primary); color: white; width: 100%; padding: 12px; margin-top: 8px; text-transform: uppercase; }
+        .btn-group { display: flex; gap: 4px; }
         .btn-sm { padding: 6px 10px; color: white; flex: 1; }
         .bg-success { background: var(--success); }
         .bg-danger { background: var(--danger); }
@@ -34,7 +35,7 @@
 <body>
 
 <div class="container">
-    <!-- ĐĂNG NHẬP -->
+    <!-- AUTH SECTION -->
     <div id="auth-section" class="card" style="max-width:380px; margin:40px auto;">
         <h2 id="auth-title" style="text-align:center;">Hệ Thống Lương</h2>
         <div id="reg-fields" class="hidden"><label>Họ và Tên</label><input type="text" id="fullName" placeholder="Nhập tên"></div>
@@ -42,10 +43,10 @@
         <label>Mật khẩu</label><input type="password" id="password" placeholder="••••••">
         <div id="retype-reg-fields" class="hidden"><label>Nhập lại mật khẩu</label><input type="password" id="repassword" placeholder="••••••"></div>
         <button class="btn-main" id="btn-auth" onclick="handleAuth()">Đăng Nhập</button>
-        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký</p>
+        <p style="text-align:center; color: var(--primary); cursor:pointer; font-size:13px; margin-top:15px;" onclick="toggleAuth()" id="toggle-text">Chưa có tài khoản? Đăng ký</p>
     </div>
 
-    <!-- NỘI DUNG CHÍNH -->
+    <!-- MAIN CONTENT -->
     <div id="main-content" class="hidden">
         <div class="card" style="display:flex; justify-content: space-between; align-items:center; flex-wrap: wrap; gap: 10px;">
             <div>Chào: <b id="user-name" style="color: var(--primary);"></b></div>
@@ -59,7 +60,10 @@
             <h3 style="margin-top:0;">Nhập Công</h3>
             <input type="hidden" id="edit-id">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div style="grid-column: span 2;"><label>Ngày làm việc</label><input type="date" id="workDate" onchange="calculatePreview()"></div>
+                <div style="grid-column: span 2;">
+                    <label>Ngày làm việc</label>
+                    <input type="date" id="workDate" onchange="calculatePreview()">
+                </div>
                 <div><label>Giờ vào</label><input type="time" id="timeIn" value="08:00" oninput="calculatePreview()"></div>
                 <div><label>Giờ ra</label><input type="time" id="timeOut" value="17:00" oninput="calculatePreview()"></div>
                 <div><label>Giải lao (phút)</label><input type="number" id="breakMin" value="45" oninput="calculatePreview()"></div>
@@ -70,9 +74,10 @@
         </div>
 
         <div class="card">
-            <div style="display: flex; justify-content: space-between; margin-bottom:10px">
-                <select id="filterMonthYear" style="width:180px;" onchange="loadData()"></select>
-                <button class="btn-sm bg-success" onclick="exportExcel()" style="max-width: 120px;">📥 EXCEL</button>
+            <div style="display: flex; justify-content: space-between; margin-bottom:10px; align-items: center;">
+                <label style="font-weight: bold; font-size: 14px;">Xem dữ liệu:</label>
+                <select id="filterMonthYear" style="width:160px; margin:0;" onchange="loadData()"></select>
+                <button class="btn-sm bg-success" onclick="exportExcel()" style="max-width: 100px; margin-left: 5px;">📥 EXCEL</button>
             </div>
             <div class="table-wrapper">
                 <table id="table-to-export">
@@ -108,6 +113,7 @@
         document.getElementById('auth-title').innerText = isLoginMode ? "Đăng Nhập" : "Đăng Ký";
         document.getElementById('reg-fields').classList.toggle('hidden', isLoginMode);
         document.getElementById('retype-reg-fields').classList.toggle('hidden', isLoginMode);
+        document.getElementById('toggle-text').innerText = isLoginMode ? "Chưa có tài khoản? Đăng ký" : "Đã có tài khoản? Đăng nhập";
     }
 
     async function handleAuth() {
@@ -117,29 +123,30 @@
             if (isLoginMode) { await auth.signInWithEmailAndPassword(email, pass); } 
             else {
                 const name = document.getElementById('fullName').value;
-                if(pass !== document.getElementById('repassword').value) return alert("Mật khẩu không khớp!");
+                if(!name || pass !== document.getElementById('repassword').value) return alert("Kiểm tra lại thông tin!");
                 const res = await auth.createUserWithEmailAndPassword(email, pass);
                 await res.user.updateProfile({ displayName: name });
+                location.reload();
             }
         } catch (e) { alert("Lỗi: " + e.message); }
     }
 
     async function changePassword() {
-        const newPass = prompt("Nhập mật khẩu mới:");
+        const newPass = prompt("Nhập mật khẩu mới (ít nhất 6 ký tự):");
         if (newPass && newPass.length >= 6) {
             try {
                 await auth.currentUser.updatePassword(newPass);
                 alert("Đã đổi mật khẩu thành công!");
-            } catch (e) { alert("Lỗi: Bạn cần đăng nhập lại trước khi đổi mật khẩu."); logout(); }
-        } else if(newPass) { alert("Mật khẩu phải ít nhất 6 ký tự!"); }
+            } catch (e) { alert("Lỗi bảo mật: Bạn cần thoát ra đăng nhập lại mới có thể đổi mật khẩu."); }
+        }
     }
 
     function logout() { auth.signOut(); location.reload(); }
 
     function getCalc() {
-        const date = document.getElementById('workDate').value || "2026-01-01";
-        const start = new Date(`${date} ${document.getElementById('timeIn').value}`);
-        let end = new Date(`${date} ${document.getElementById('timeOut').value}`);
+        const dateVal = document.getElementById('workDate').value || "2026-05-14";
+        const start = new Date(`${dateVal}T${document.getElementById('timeIn').value}`);
+        let end = new Date(`${dateVal}T${document.getElementById('timeOut').value}`);
         if (end <= start) end.setDate(end.getDate() + 1);
         let total = (end - start) / 3600000 - (parseInt(document.getElementById('breakMin').value) / 60);
         total = Math.max(0, total);
@@ -166,17 +173,23 @@
         const date = document.getElementById('workDate').value;
         const id = document.getElementById('edit-id').value;
         if(!date) return alert("Chọn ngày!");
+        
         const res = getCalc();
+        // Lấy chính xác chuỗi yyyy-mm từ ô date để tránh lệch múi giờ
+        const thangNam = date.substring(0, 7); 
+
         const data = {
             uid: user.uid, ho_ten: user.displayName || user.email, ngay: date,
             gio_vao: document.getElementById('timeIn').value, gio_ra: document.getElementById('timeOut').value,
             giai_lao: document.getElementById('breakMin').value, gio_lam: res.basic, tang_ca: res.ot,
-            thanh_tien: res.money, thang_nam: date.substring(0, 7)
+            thanh_tien: res.money, thang_nam: thangNam
         };
+
         try {
             if(id) await db.collection("bang_luong").doc(id).update(data);
             else await db.collection("bang_luong").add(data);
-            alert("Đã lưu!"); resetForm();
+            alert("Đã lưu dữ liệu vào " + thangNam); 
+            resetForm();
         } catch(e) { alert(e.message); }
     }
 
@@ -189,16 +202,18 @@
         q.onSnapshot(snapshot => {
             let html = '', sHrs = 0, sOt = 0, sPay = 0;
             let docs = []; snapshot.forEach(d => docs.push({id: d.id, ...d.data()}));
-            docs.sort((a,b) => a.ngay.localeCompare(b.ngay)); // Sắp xếp tại máy khách nếu chưa có Index
+            docs.sort((a,b) => a.ngay.localeCompare(b.ngay));
 
             docs.forEach(d => {
                 sHrs += parseFloat(d.gio_lam); sOt += parseFloat(d.tang_ca); sPay += parseInt(d.thanh_tien);
                 html += `<tr><td>${d.ngay}</td><td>${d.ho_ten}</td><td>${d.gio_vao}-${d.gio_ra}</td><td>${d.gio_lam}</td><td>${d.tang_ca}</td><td>${d.thanh_tien.toLocaleString()}</td>
-                <td><button class="bg-warning" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
-                <button class="bg-danger" onclick="deleteData('${d.id}')">Xóa</button></td></tr>`;
+                <td><div class="btn-group">
+                    <button class="bg-warning btn-sm" onclick="editData('${d.id}','${d.ngay}','${d.gio_vao}','${d.gio_ra}',${d.giai_lao})">Sửa</button>
+                    <button class="bg-danger btn-sm" onclick="deleteData('${d.id}')">Xóa</button>
+                </div></td></tr>`;
             });
-            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Trống</td></tr>';
-            document.getElementById('dataFooter').innerHTML = `<tr class="summary-row"><td colspan="3">TỔNG</td><td>${sHrs.toFixed(2)}h</td><td>${sOt.toFixed(2)}h</td><td colspan="2" style="color:red">${sPay.toLocaleString()} ¥</td></tr>`;
+            document.getElementById('dataBody').innerHTML = html || '<tr><td colspan="7">Không có dữ liệu tháng này</td></tr>';
+            document.getElementById('dataFooter').innerHTML = `<tr class="summary-row"><td colspan="3">TỔNG THÁNG</td><td>${sHrs.toFixed(2)}h</td><td>${sOt.toFixed(2)}h</td><td colspan="2" style="color:red; font-size:16px">${sPay.toLocaleString()} ¥</td></tr>`;
         });
     }
 
@@ -211,17 +226,27 @@
 
     async function deleteData(id) { if(confirm("Xóa dòng này?")) await db.collection("bang_luong").doc(id).delete(); }
 
-    function resetForm() { document.getElementById('edit-id').value = ""; document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU"; document.getElementById('btn-cancel').classList.add('hidden'); }
+    function resetForm() { 
+        document.getElementById('edit-id').value = ""; 
+        document.getElementById('btn-save').innerText = "LƯU DỮ LIỆU"; 
+        document.getElementById('btn-cancel').classList.add('hidden'); 
+        document.getElementById('workDate').valueAsDate = new Date();
+    }
 
     function exportExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById("table-to-export")), `Luong_${document.getElementById('filterMonthYear').value}.xlsx`); }
 
     function initFilter() {
         const s = document.getElementById('filterMonthYear'); if(s.options.length > 0) return;
         const now = new Date();
+        const curY = now.getFullYear();
+        const curM = now.getMonth();
+        
         for(let i = -6; i <= 12; i++) {
-            let d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-            let v = d.toISOString().substring(0, 7);
-            s.add(new Option(`Tháng ${d.getMonth()+1}/${d.getFullYear()}`, v, v === now.toISOString().substring(0, 7)));
+            let d = new Date(curY, curM + i, 1);
+            let y = d.getFullYear();
+            let m = (d.getMonth() + 1).toString().padStart(2, '0');
+            let v = `${y}-${m}`;
+            s.add(new Option(`Tháng ${m}/${y}`, v, v === `${curY}-${(curM+1).toString().padStart(2,'0')}`));
         }
         document.getElementById('workDate').valueAsDate = now;
     }
